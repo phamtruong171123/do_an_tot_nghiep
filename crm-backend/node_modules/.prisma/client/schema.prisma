@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String     @unique
+  passwordHash String
+  email        String?    @unique
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  sessions     UserSession[]
+  agentProfile AgentProfile?
+}
+
+model AgentProfile {
+  userId       Int       @id
+  online       Boolean   @default(false)
+  userLoad     Int       @default(0)
+  lastOnlineAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model UserSession {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  refreshToken String   @unique
+  deviceInfo   String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  expiredAt    DateTime
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isActive])
+}
