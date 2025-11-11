@@ -16,10 +16,8 @@ export async function me(req: Request, res: Response) {
   res.json({ id: user.id, username: user.username, email: user.email, role: user.role, status: user.status });
 }
 
-// GET /api/users?page=&pageSize=&q=&role=&status=&sort=createdAt:desc
+// GET /api/users?q=&role=&status=&sort=createdAt:desc
 export async function listUsers(req: Request, res: Response) {
-  const page = parseIntOr(req.query.page, 1);
-  const pageSize = Math.min(parseIntOr(req.query.pageSize, 20), 100);
   const q = (req.query.q as string | undefined)?.trim();
   const role = (req.query.role as UserRole | undefined) || undefined;
   const status = (req.query.status as UserStatus | undefined) || undefined;
@@ -33,8 +31,6 @@ export async function listUsers(req: Request, res: Response) {
     if (['asc', 'desc'].includes((d || '').toLowerCase())) sortDir = d.toLowerCase() as Prisma.SortOrder;
   }
 
-  // ⚠️ MySQL không hỗ trợ 'mode: insensitive' trong Prisma filter
-  // Tìm kiếm sẽ phụ thuộc collation (thường là không phân biệt hoa/thường).
   const where: Prisma.UserWhereInput = {
     AND: [
       role ? { role } : {},
@@ -50,23 +46,57 @@ export async function listUsers(req: Request, res: Response) {
     ],
   };
 
+  // Ngưỡng coi là "online" nếu lastOnlineAt còn mới (2 phút)
+  const ONLINE_WINDOW_MS = 2 * 60 * 1000;
+
   const [total, items] = await Promise.all([
     prisma.user.count({ where }),
     prisma.user.findMany({
       where,
       orderBy: { [sortField]: sortDir },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        status: true,
+        agentProfile: {
+          select: {
+            online: true,
+            userLoad: true,
+            lastOnlineAt: true,
+          },
+        },
+      },
     }),
   ]);
 
+  const now = Date.now();
   res.json({
-    items: items.map((u) => ({ id: u.id, username: u.username, email: u.email, role: u.role, status: u.status })),
+    items: items.map(u => {
+      const ap = u.agentProfile;
+      // Tính online an toàn: cờ online + lastOnlineAt còn trong cửa sổ (nếu có)
+      const derivedOnline =
+        !!ap?.online &&
+        (!ap?.lastOnlineAt || now - ap.lastOnlineAt.getTime() <= ONLINE_WINDOW_MS);
+
+      return {
+        id: u.id,
+        username: u.username,
+        email: u.email,
+        role: u.role,
+        status: u.status,
+        agentProfile: {
+          online: derivedOnline,
+          lastOnlineAt: ap?.lastOnlineAt || null,
+          userLoad: ap?.userLoad ?? 0,
+        },
+      };
+    }),
     total,
-    page,
-    pageSize,
   });
 }
+
 
 export async function getUser(req: Request, res: Response) {
   const id = Number(req.params.id); //  ép number
@@ -76,30 +106,48 @@ export async function getUser(req: Request, res: Response) {
 }
 
 export async function createUser(req: Request, res: Response) {
-  const { username, email, password, role = 'AGENT', status = 'ACTIVE' } = req.body as {
-    username?: string;
-    email?: string | null;
-    password?: string;
-    role?: UserRole;
-    status?: UserStatus;
-  };
-  if (!username || !password) return res.status(400).json({ message: 'username & password required' });
+  try {
+    const { username, email, password, role = 'AGENT', status = 'ACTIVE' } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ message: 'username & password required' });
+    }
 
-  // unique checks
-  const exists = await prisma.user.findFirst({
-    where: { OR: [{ username }, ...(email ? [{ email }] : [])] },
-    select: { id: true },
-  });
-  if (exists) return res.status(409).json({ message: 'username/email already exists' });
+    // unique checks
+    const exists = await prisma.user.findFirst({
+      where: { OR: [{ username }, ...(email ? [{ email }] : [])] },
+      select: { id: true },
+    });
+    if (exists) return res.status(409).json({ message: 'username/email already exists' });
 
-  const hash = await bcrypt.hash(password, 10);
-  const created = await prisma.user.create({
-    data: { username, email: email ?? null, passwordHash: hash, role, status },
-  });
-  res
-    .status(201)
-    .json({ id: created.id, username: created.username, email: created.email, role: created.role, status: created.status });
+    const hash = await bcrypt.hash(password, 10);
+
+    const created = await prisma.user.create({
+      data: {
+        username,
+        email: email ?? null,
+        passwordHash: hash,
+        role: role as any,     
+        status: status as any,
+        agentProfile: {
+          create: {
+            online: true,
+            userLoad: 0,
+            lastOnlineAt: new Date(),
+          },
+        },
+      },
+      select: {
+        id: true, username: true, email: true, role: true, status: true,
+        agentProfile: { select: { online: true, lastOnlineAt: true } },
+      },
+    });
+
+    return res.status(201).json(created);
+  } catch (e:any) {
+    return res.status(500).json({ message: e?.message || 'Create user failed' });
+  }
 }
+
 
 export async function updateUser(req: Request, res: Response) {
   const id = Number(req.params.id); //  ép number

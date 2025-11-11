@@ -26,8 +26,8 @@ model User {
   status       UserStatus @default(ACTIVE)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  
 
-  sessions     UserSession[]
   agentProfile AgentProfile?
 }
 
@@ -38,18 +38,8 @@ model AgentProfile {
   lastOnlineAt DateTime?
 
   user User @relation(fields: [userId], references: [id])
+  @@index([online])
+  @@index([lastOnlineAt])
 }
 
-model UserSession {
-  id           Int      @id @default(autoincrement())
-  userId       Int
-  refreshToken String   @unique
-  deviceInfo   String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  expiredAt    DateTime
 
-  user User @relation(fields: [userId], references: [id])
-
-  @@index([userId, isActive])
-}

@@ -1,5 +1,12 @@
 {
   "dependencies": {
-    "@prisma/client": "^6.19.0"
+    "@prisma/client": "^6.19.0",
+    "@tippyjs/react": "^4.2.6",
+    "classnames": "^2.5.1",
+    "react-router-dom": "^7.9.5",
+    "tippy.js": "^6.3.7"
+  },
+  "devDependencies": {
+    "sass": "^1.94.0"
   }
 }
