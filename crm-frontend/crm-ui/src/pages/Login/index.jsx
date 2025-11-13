@@ -7,10 +7,9 @@ import PasswordInput from "../../components/PasswordInput";
 import Button from "../../components/Button";
 const cx = classNames.bind(styles);
 
+
 const API_BASE =
-  import.meta?.env?.VITE_API_BASE ||
-  process.env.REACT_APP_API_BASE ||
-  "http://localhost:4000";
+  import.meta?.env?.VITE_API_BASE ||process.env.REACT_APP_API_BASE || "http://localhost:4000";
 
 export default function Login() {
   const [username, setUsername] = React.useState("");
@@ -21,39 +20,51 @@ export default function Login() {
   const canLogin = username.trim() !== "" && password.trim() !== "";
 
   async function handleLogin(e) {
-    e.preventDefault();
-    if (!canLogin || loading) return;
+  e.preventDefault();
+  if (!canLogin || loading) return;
 
-    setLoading(true);
-    setError("");
+  setLoading(true);
+  setError("");
 
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ username, password }), 
-      });
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"   
+      },
+      credentials: "include",
+      body: JSON.stringify({ username, password }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Login failed");
+    const ct = res.headers.get("content-type") || "";
+    const data = ct.includes("application/json")
+      ? await res.json()
+      : { message: await res.text() }; 
 
-     
-      if (data?.accessToken) {
-        localStorage.setItem("accessToken", data.accessToken);
-        localStorage.setItem("me", JSON.stringify(data.user));
-      }
-
-      // đi tiếp
-      if (data.user.role === "admin") window.location.href = "/app/admin/dashboard";
-      else if (data.user.role === "agent") window.location.href = "/app/agent/dashboard";
-      else window.location.href = "/app/login";
-    } catch (err) {
-      setError(err.message || "Login failed");
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      // 400/401/403 
+      throw new Error(data?.message || `HTTP ${res.status}`);
     }
+
+    if (data?.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("me", JSON.stringify(data.user));
+      localStorage.setItem("refreshToken", data.refreshToken || "");
+    }
+
+   
+    const role = String(data?.user?.role || "").toUpperCase();
+    if (role === "ADMIN")      window.location.href = "/app/admin/dashboard";
+    else if (role === "AGENT") window.location.href = "/app/agent/dashboard";
+    else                       window.location.href = "/app/login";
+  } catch (err) {
+    setError(err?.message || "Login failed");
+  } finally {
+    setLoading(false);
   }
+}
+
 
   return (
     <div className={cx("page")}>

@@ -1,11 +1,4 @@
-// src/lib/apiClient.js
-// Client nhỏ gọn cho mọi request cần Bearer token + (tuỳ chọn) refresh
-
-// ==== Config cơ bản ====
-export const API_BASE =
-  (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ||
-  process.env.REACT_APP_API_BASE ||
-  "http://localhost:4000";
+const API_BASE =  "http://localhost:4000";
 
 // Khóa lưu token – đổi nếu bạn muốn
 const ACCESS_TOKEN_KEY = "accessToken";
@@ -89,8 +82,8 @@ async function toApiError(res) {
   return err;
 }
 
-// ==== (Tuỳ chọn) refresh token ====
-// Đổi endpoint cho khớp BE nếu bạn có flow refresh
+// ====  refresh token ====
+
 async function tryRefreshToken() {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
@@ -98,7 +91,7 @@ async function tryRefreshToken() {
     const res = await fetch(`${API_BASE}/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // nếu BE cần cookie
+      credentials: "include", 
       body: JSON.stringify({ refreshToken }),
     });
     if (!res.ok) return null;
@@ -123,7 +116,7 @@ export async function apiFetch(pathOrUrl, options = {}) {
     method = "GET",
     body,
     headers,
-    credentials = "include", // thường để include nếu BE có cookie
+    credentials = "include", 
     baseUrl = API_BASE,
     useRefresh = true,
     raw = false,

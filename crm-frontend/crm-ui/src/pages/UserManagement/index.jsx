@@ -392,7 +392,7 @@ function dismissToast(id) {
         </div>
       )}
 
-      <div className={cx("toasts")} style={{ top:70}} aria-live="polite" aria-atomic="true">
+      <div className={cx("toasts")} style={{ top:50}} aria-live="polite" aria-atomic="true">
   {toasts.map((t) => (
     <div key={t.id} className={cx("toast", t.type)}>
       <span className={cx("toastMsg")}>{t.message}</span>

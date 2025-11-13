@@ -1,0 +1,36 @@
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fafbff;
+}
+
+/* hàng tin nhắn */
+.msg { display: flex; gap: 8px; }
+.mine { justify-content: flex-end; }     
+.theirs { justify-content: flex-start; } 
+.avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; margin-top: 4px; }
+
+.bubble {
+  max-width: 60%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #e5edff;    
+  color: #111827;
+}
+.mine .bubble {
+  background: #3b82f6;    
+  color: #fff;
+}
+
+.text { margin: 0; }
+.meta { margin-top: 6px; font-size: 11px; opacity: .7; display: flex; gap: 8px; }
+.attach { margin: 8px 0 0; padding-left: 16px; }
+
+
+.selected.theirs .bubble { outline: 2px solid #3b82f6; }
+.selected.mine .bubble   { box-shadow: 0 0 0 2px #1d4ed8 inset; }

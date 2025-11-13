@@ -1,0 +1,14 @@
+.chatLayout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100vh;     /* hoặc 100% nếu parent đã set height */
+  min-height: 0;     /* quan trọng để con có thể scroll */
+}
+
+.sidebar { border-right: 1px solid #eee; overflow: auto; }
+
+.content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;     /* để MessageList nhận scroll */
+}

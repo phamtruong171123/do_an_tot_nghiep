@@ -7,6 +7,9 @@
     "tippy.js": "^6.3.7"
   },
   "devDependencies": {
-    "sass": "^1.94.0"
+    "@types/node": "^24.10.1",
+    "sass": "^1.94.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   }
 }

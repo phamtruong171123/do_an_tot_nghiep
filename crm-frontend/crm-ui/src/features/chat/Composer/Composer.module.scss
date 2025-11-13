@@ -1,0 +1,21 @@
+.wrap {
+  margin-top: auto;        
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  background: #fff;         
+
+  position: sticky;
+  bottom: 0;
+}
+
+
+.input { 
+    flex:1; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; }
+.actions { 
+    display:flex; gap:8px; }
+.ghost { 
+    background:transparent; border:1px solid #e5e7eb; padding:8px 12px; border-radius:10px; cursor:pointer; }
+.primary { 
+    background:#3b82f6; color:#fff; border:0; padding:8px 16px; border-radius:10px; cursor:pointer; }

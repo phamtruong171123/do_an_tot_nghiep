@@ -68,7 +68,7 @@ export type RevokeParams = {
 /** Thu hồi token: đưa token vào blacklist đến khi hết hạn */
 export async function revokeSession(params: RevokeParams): Promise<{ ok: true } | { ok: false; reason: string }> {
   try {
-    // Revoke refresh (ưu tiên)
+   
     if (params.refreshToken) {
       const payload: any = jwt.verify(params.refreshToken, process.env.JWT_SECRET!);
       const jti = payload?.jti as string | undefined;
@@ -118,7 +118,7 @@ export async function login(username: string, password: string, deviceInfo?: str
 
 export async function refresh(refreshToken: string) {
   // Verify chữ ký + hạn
-  const payload: any = jwt.verify(refreshToken, process.env.JWT_SECRET!); // throws nếu invalid/expired
+  const payload: any = jwt.verify(refreshToken, process.env.JWT_SECRET!); 
   if (payload?.typ !== 'refresh') throw new Error('INVALID_TOKEN_TYPE');
 
   // Check blacklist

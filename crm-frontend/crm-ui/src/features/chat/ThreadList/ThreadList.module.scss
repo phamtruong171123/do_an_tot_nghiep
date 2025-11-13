@@ -1,0 +1,29 @@
+.list { display: grid; }
+
+.item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 10px;
+}
+.item:hover { background: #f4f6fb; }
+
+.active {
+          /* màu khi chọn */
+  outline: 2px solid #c7d2fe;    /* viền nhẹ */
+    background: #e0e7ff;           /* nền nhẹ */
+
+}
+.avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.body { min-width: 0; }
+.row { display: flex; justify-content: space-between; gap: 8px; }
+.title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.snippet { color:#6b7280; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.time { font-size: 12px; color:#9ca3af; }
+.badge { background:#3b82f6; color:#fff; border-radius:999px; padding:2px 8px; font-size:12px; }

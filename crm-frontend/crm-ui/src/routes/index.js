@@ -7,6 +7,7 @@ import Placeholder from "../pages/PlaceHolder";
 import Login from "../pages/Login";
 import ChangePassword from "../pages/ChangePassword";
 import UserManagement from "../pages/UserManagement"; 
+import Chat from "../features/chat";
 
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
@@ -49,10 +50,10 @@ export default function AppRoutes() {
         <Route path="/app/admin" element={<AdminLayout me={me} />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Placeholder title="Admin Dashboard" />} />
-          <Route path="users"     element={<Placeholder title="Users" />} />
+          <Route path="users"     element={<UserManagement />} />
           <Route path="tasks"     element={<Placeholder title="Tasks" />} />
           <Route path="contacts"  element={<Placeholder title="Contacts" />} />
-          <Route path="chat"      element={<Placeholder title="Chat" />} />
+          <Route path="chat"      element={<Chat/>} />
         </Route>
 
         {/* AGENT */}

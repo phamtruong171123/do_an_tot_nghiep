@@ -1,0 +1,1 @@
+Websocket : server tạo room, fe join room, khi khách nhắn tin đến page, server be gọi broadcast, fe bắt được qua useEffect -> render được luôn

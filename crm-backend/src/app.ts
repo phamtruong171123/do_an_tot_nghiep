@@ -4,7 +4,8 @@ import cors from 'cors';
 import authRoutes from './modules/auth/auth.routes';
 import userRoutes from './modules/user/user.routes';
 import presenceRoutes from './modules/presence/presence.routes';
-
+import facebookRoutes from './modules/facebook/facebook.routes';
+import chatRouter from './modules/chat/chat.routes';
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ]
@@ -28,7 +29,9 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toIS
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('api', presenceRoutes)
+app.use('/api', presenceRoutes)
+app.use('/api/facebook', facebookRoutes);
+app.use('/api/chat', chatRouter);
 
 const PORT = Number(process.env.PORT ?? 4000);
-app.listen(PORT, () => console.log(`Server http://localhost:${PORT}`));
+

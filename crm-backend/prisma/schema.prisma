@@ -18,17 +18,18 @@ enum UserStatus {
 }
 
 model User {
-  id           Int        @id @default(autoincrement())
-  username     String     @unique
+  id           Int           @id @default(autoincrement())
+  username     String        @unique
   passwordHash String
-  email        String?    @unique
+  email        String?       @unique
   role         UserRole
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  
+  status       UserStatus    @default(ACTIVE)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   agentProfile AgentProfile?
+  // Quan hệ ngược: các conversation được assign cho user này
+  assignedConversations Conversation[] @relation("ConversationAssignee")
 }
 
 model AgentProfile {
@@ -42,4 +43,55 @@ model AgentProfile {
   @@index([lastOnlineAt])
 }
 
+model Channel {
+  id              String         @id @default(uuid())
+  type            String         @default("FACEBOOK")
+  pageId          String         @unique
+  pageName        String?
+  pageAccessToken String
+  status          String         @default("ACTIVE")
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
+  conversations   Conversation[]
+}
+
+model Conversation {
+  id              String       @id @default(uuid())
+  channelId       String
+  externalUserId  String
+  title           String?
+  lastMessageAt   DateTime?
+  lastMessageText String?
+  avataUrl        String?
+
+  assigneeId      Int?
+  assignedAt      DateTime?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  channel         Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  messages        Message[]
+
+ 
+  assignee        User?        @relation("ConversationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@unique([channelId, externalUserId])
+  @@index([updatedAt])
+  @@index([assigneeId])
+}
+
+model Message {
+  id                String       @id @default(uuid())
+  conversationId    String
+  direction         String       // "IN" | "OUT"
+  text              String?
+  externalMessageId String?      @unique
+  status            String       @default("sent")
+  createdAt         DateTime     @default(now())
+
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
