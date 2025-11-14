@@ -5,6 +5,7 @@ import AppHeader from "../../components/AppHeader";
 import classNames from "classnames/bind";
 import styles from "./AgentLayout.module.scss";
 import { useNavigate } from "react-router-dom";
+import   { HeaderSearchProvider }  from "../../contexts/HeaderSearchContext";
 import usePresenceHeartbeat from "../../hooks/usePresenceHeartbeat";
 const cx = classNames.bind(styles);
 
@@ -20,20 +21,23 @@ export default function AgentLayout({me}) {
 
  const items = [
     { to: "/app/agent/dashboard", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
+    { to: "/app/agent/chat",      label: "Chat",      iconClass: "fa-solid fa-comments" },
     { to: "/app/agent/tasks",     label: "Tasks",     iconClass: "fa-solid fa-list-check" },
     { to: "/app/agent/contacts",  label: "Contacts",  iconClass: "fa-solid fa-address-book" },
-    { to: "/app/agent/chat",      label: "Chat",      iconClass: "fa-solid fa-comments" },
+    
   ];
 
   return (
-    <div className={cx("layout")}>
-      <Sidebar items={items} />
-      <main className={cx("main")}>
-        <AppHeader user={me} onChangePassword={onChangePassword} onLogout={onLogout} />
-        <div className={cx("content")}>
-          <Outlet />
-        </div>
-      </main>
-    </div>
+    <HeaderSearchProvider>
+      <div className={cx("layout")}>
+        <Sidebar items={items} />
+        <main className={cx("main")}>
+          <AppHeader user={me} onChangePassword={onChangePassword} onLogout={onLogout} />
+          <div className={cx("content")}>
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </HeaderSearchProvider>
   );
 }

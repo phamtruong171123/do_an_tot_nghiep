@@ -1,5 +1,10 @@
+import { ChatUnreadProvider } from "./contexts/ChatUnReadContext";
 import AppRoutes from "./routes";
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <ChatUnreadProvider>
+      <AppRoutes />
+    </ChatUnreadProvider>
+);
 }

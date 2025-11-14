@@ -50,19 +50,21 @@ export default function AppRoutes() {
         <Route path="/app/admin" element={<AdminLayout me={me} />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Placeholder title="Admin Dashboard" />} />
+          <Route path="chat"      element={<Chat/>} />
           <Route path="users"     element={<UserManagement />} />
           <Route path="tasks"     element={<Placeholder title="Tasks" />} />
           <Route path="contacts"  element={<Placeholder title="Contacts" />} />
-          <Route path="chat"      element={<Chat/>} />
+          
         </Route>
 
         {/* AGENT */}
         <Route path="/app/agent" element={<AgentLayout me={me} />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Placeholder title="Agent Dashboard" />} />
+          <Route path="chat"      element={<Chat/>} />
           <Route path="tasks"     element={<Placeholder title="Tasks" />} />
           <Route path="contacts"  element={<Placeholder title="Contacts" />} />
-          <Route path="chat"      element={<Placeholder title="Chat" />} />
+          
         </Route>
       </Route>
 

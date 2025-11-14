@@ -1,29 +1,31 @@
-import { apiPost, apiGet } from "../../lib/apiClient";
+import { apiPost, apiGet, apiPatch } from "../../lib/apiClient";
 
-function normalizeThread(c) {
-  const title = c.title || c.externalUserId || "Khách hàng";
+
+export function normalizeThread(raw) {
+  const externalId = raw.externalUserId;
+
+  // nếu backend không có tên hoặc trả "Facebook User" thì dùng FB-id
+  const displayTitle =
+    raw.title && raw.title !== "Facebook User"
+      ? raw.title
+      : externalId
+      ? `FB-${externalId}`
+      : "Facebook User";
 
   return {
-    id: c.id,
-    title,
-    // avatar cho ThreadList + ChatHeader
-    iconUrl: c.avatarUrl || null,
+    id: raw.id,
+    title: displayTitle,
+    iconUrl: raw.avatarUrl || null, // null thì FE sẽ dùng ảnh default
     participants: [
       {
-        id: c.externalUserId,
-        name: title,
-        avatarUrl: c.avatarUrl || null,
+        id: externalId,
+        name: displayTitle,
+        avatarUrl: raw.avatarUrl || null,
       },
     ],
-    // ThreadListItem đang dùng updatedAt
-    updatedAt: c.lastMessageAt || null,
-    lastMessageSnippet: c.lastMessageSnippet || "",
-    unread: c.unread ?? 0,
-
-    // lưu thêm, có thể dùng sau này
-    type: c.type,
-    externalUserId: c.externalUserId,
-    assignee: c.assignee || null,
+    updatedAt: raw.lastMessageAt,
+    lastMessageSnippet: raw.lastMessageSnippet || "",
+    unread: raw.unread ?? 0,
   };
 }
 
@@ -35,7 +37,7 @@ function normalizeMessage(m) {
     id: m.id,
     text: m.text || "",
     html: null,
-    attachments: [],             // hiện tại backend chưa có, để trống
+    attachments: [],             // hiện tại backend chưa có
     sentAt: m.createdAt,         // MessageBubble dùng msg.sentAt
     status: m.status || "",
     isMine: dir === "OUT",       // OUT = tin của Agent
@@ -52,6 +54,7 @@ export async function fetchThreads({ q = "", mine = false, limit = 20 } = {}) {
   if (limit) params.set("limit", String(limit));
 
   const res = await apiGet(`/api/chat/conversations?${params.toString()}`);
+  
   const items = Array.isArray(res?.items) ? res.items : [];
   return items.map(normalizeThread);
 }
@@ -69,4 +72,9 @@ export async function sendMessage(conversationId, text) {
   const res = await apiPost(`/api/chat/conversations/${conversationId}/messages`, payload);
   // backend đã trả 1 object duy nhất
   return normalizeMessage(res);
+}
+
+// Patch /api/chat/conversations/:id/read
+export async function markConversationRead(conversationId) {
+  return apiPatch(`/api/chat/conversations/${conversationId}/read`, {});
 }

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { fetchFacebookUserProfile } from "../facebook/facebook.service";
 const prisma = new PrismaClient();
 
 export async function findOrCreateConversationByPageAndUser(pageId: string, externalUserId: string) {
@@ -14,13 +15,25 @@ export async function findOrCreateConversationByPageAndUser(pageId: string, exte
       ? Number(process.env.DEFAULT_ASSIGNEE_USER_ID)
       : undefined;
 
+      //lấy tên và avatar từ facebook
+      let title: string = "Facebook User";
+      let avatarUrl: string | null = null;
+      try {
+        const profile = await fetchFacebookUserProfile(pageId, externalUserId);
+        title = profile.name;
+        avatarUrl = profile.avatarUrl;
+      } catch (error) {
+        console.warn("Failed to fetch Facebook user profile:", error);
+      }
+
     conv = await prisma.conversation.create({
       data: {
         channelId: channel.id,
         externalUserId,
-        title: `FB ${externalUserId}`,
+        title: title || "Facebook User",
         assigneeId: defaultAssigneeId,
         assignedAt: defaultAssigneeId ? new Date() : null,
+        avataUrl: avatarUrl || null,
       },
     });
   }
@@ -43,7 +56,7 @@ export async function saveInboundMessage(pageId: string, externalUserId: string,
 
   await prisma.conversation.update({
     where: { id: conv.id },
-    data: { lastMessageAt: msg.createdAt, lastMessageText: text },
+    data: { lastMessageAt: msg.createdAt, lastMessageText: text , unreadCount: { increment: 1 } },
   });
 
   return { conversationId: conv.id, message: msg };

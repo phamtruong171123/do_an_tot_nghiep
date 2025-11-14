@@ -3,10 +3,16 @@ import classNames from "classnames/bind";
 import styles from "./AppHeader.module.scss";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
+import { useLocation } from "react-router-dom";
+import  { HeaderSearchContext }  from "../../contexts/HeaderSearchContext"; 
+
 const cx = classNames.bind(styles);
 
-export default function AppHeader({ title = "", user , onChangePassword, onLogout}) {
-    const Menu = (
+export default function AppHeader({ title = "", user, onChangePassword, onLogout }) {
+  const { text, setText } = React.useContext(HeaderSearchContext); 
+  const location = useLocation();
+
+  const Menu = (
     <div className={cx("menu")}>
       <button className={cx("menuItem")} onClick={onChangePassword}>
         <i className={`fa-solid fa-key ${cx("menuIcon")}`} aria-hidden="true"></i>
@@ -18,39 +24,53 @@ export default function AppHeader({ title = "", user , onChangePassword, onLogou
       </button>
     </div>
   );
+
+  let searchPlaceholder = "Global search";
+  if (
+    location.pathname.startsWith("/app/admin/chat") ||
+    location.pathname.startsWith("/app/agent/chat")
+  ) {
+    searchPlaceholder = "Search by contact or message";
+  }
+
+  const handleSearchChange = (e) => {
+    setText(e.target.value);
+  };
+
   return (
     <header className={cx("header")}>
       <div className={cx("left")}>
-       
         <div className={cx("searchWrap")}>
-  <i className={`fa-solid fa-magnifying-glass ${cx("searchIcon")}`} aria-hidden="true"></i>
-  <input
-    className={cx("search")}
-    type="text"
-    placeholder="Global search"
-  />
-</div>
-
+          <i
+            className={`fa-solid fa-magnifying-glass ${cx("searchIcon")}`}
+            aria-hidden="true"
+          ></i>
+          <input
+            className={cx("search")}
+            type="text"
+            placeholder={searchPlaceholder}
+            value={text}
+            onChange={handleSearchChange}
+          />
+        </div>
       </div>
       <div className={cx("center")}>{title}</div>
       <div className={cx("right")}>
         <button className={cx("iconBtn")} title="Notifications">
-            <i className="fa-solid fa-bell" aria-hidden="true"></i>
+          <i className="fa-solid fa-bell" aria-hidden="true"></i>
         </button>
         <div className={cx("user")}>
-          <Tippy content={Menu} interactive  placement="bottom-end" theme="light">
-          <div className={cx("user")} role="button" tabIndex={0}>
-            <div className={cx("avatar")}>
-              {user?.username?.[0]?.toUpperCase() || "U"}
+          <Tippy content={Menu} interactive placement="bottom-end" theme="light">
+            <div className={cx("user")} role="button" tabIndex={0}>
+              <div className={cx("avatar")}>
+                {user?.username?.[0]?.toUpperCase() || "U"}
+              </div>
+              <div className={cx("meta")}>
+                <div className={cx("name")}>{user?.username || "User"}</div>
+                <div className={cx("role")}>{user?.email || "email"}</div>
+              </div>
             </div>
-            <div className={cx("meta")}>
-              <div className={cx("name")}>{user?.username || "User"}</div>
-              <div className={cx("role")}>{user?.role || "Agent"}</div>
-            </div>
-           
-          </div>
-        </Tippy>
-          
+          </Tippy>
         </div>
       </div>
     </header>

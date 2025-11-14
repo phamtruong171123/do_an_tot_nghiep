@@ -16,86 +16,85 @@ export function verifyWebhook(req: Request, res: Response) {
   return res.sendStatus(403);
 }
 
-/** POST /api/facebook/webhook (nhận tin nhắn thật từ Facebook) */
+/** POST /api/facebook/webhook (chỉ nhận tin NHẮN ĐẾN từ khách) */
 export async function receiveWebhook(req: Request, res: Response) {
- 
   try {
     const body = req.body;
-  
+
+    // Chỉ xử lý event từ Page
     if (body?.object !== "page") return res.sendStatus(404);
 
-    for (const entry of body.entry || []) {
-      const pageId = String(entry.id || "");
-      for (const ev of entry.messaging || []) {
-        const senderId = String(ev?.sender?.id || "");
-        const recipientId = String(ev?.recipient?.id || "");
-        if (!pageId || !senderId || !recipientId) continue;
+    for (const entry of body.entry ?? []) {
+      const pageId = String(entry.id ?? "");
+      if (!pageId) continue;
 
-        // Luật đơn giản: sender === pageId => OUTBOUND (echo); ngược lại INBOUND
-        const isOutbound = senderId === pageId;
-        const userPsid = isOutbound ? recipientId : senderId;
+      for (const ev of entry.messaging ?? []) {
+        const senderId = String(ev?.sender?.id ?? "");
+        const recipientId = String(ev?.recipient?.id ?? "");
+        if (!senderId || !recipientId) continue;
 
-        // CASE: MESSAGE (text/attachments)
-        if (ev.message) {
-          const mid = ev.message.mid as string | undefined;
-          const textRaw = (ev.message.text || "").trim();
+        // Theo thiết kế: webhook này CHỈ xử lý tin từ khách -> page
+        // => senderId luôn là PSID của khách
+        const userPsid = senderId;
+
+        const message = ev.message;
+        const postback = ev.postback;
+
+        // ===== CASE 1: MESSAGE (text / attachment) =====
+        if (message) {
+          const mid = message.mid as string | undefined;
+
+          const textRaw = (message.text || "").trim();
           const text =
             textRaw ||
-            (Array.isArray(ev.message.attachments) && ev.message.attachments.length
-              ? `[${ev.message.attachments[0].type} attachment]`
+            (Array.isArray(message.attachments) &&
+            message.attachments.length > 0
+              ? `[${message.attachments[0].type} attachment]`
               : "");
 
-          if (isOutbound) {
-            // OUT: cần conversationId để lưu
-            const { conv } = await findOrCreateConversationByPageAndUser(pageId, userPsid);
-            const msg = await saveOutboundMessage(conv.id, text, mid);
+          if (!text) continue; // không có nội dung thì bỏ qua
 
-            broadcastMessage(conv.id, {
-              id: msg.id,
-              direction: msg.direction,
-              text: msg.text,
-              createdAt: msg.createdAt,
-              status: msg.status,
-            });
-          } else {
-            // IN: dùng đúng chữ ký saveInboundMessage(pageId, psid, text, mid?)
-            const saved = await saveInboundMessage(pageId, userPsid, text, mid);
-            const m = saved.message;
+          const saved = await saveInboundMessage(pageId, userPsid, text, mid);
+          const m = saved.message;
 
-            broadcastMessage(saved.conversationId, {
-              id: m.id,
-              direction: m.direction,
-              text: m.text,
-              createdAt: m.createdAt,
-              status: m.status,
-            });
-          }
+          broadcastMessage(saved.conversationId, {
+            id: m.id,
+            direction: m.direction,      // "IN"
+            text: m.text,
+            createdAt: m.createdAt,
+            status: m.status,
+          });
+
           continue;
         }
 
-        // CASE: POSTBACK -> coi như IN
-        if (ev.postback) {
+        // ===== CASE 2: POSTBACK (button, quick reply...) – coi như INBOUND =====
+        if (postback) {
           const text =
-            String(ev.postback.title || ev.postback.payload || "").trim() || "[postback]";
+            String(postback.title || postback.payload || "").trim() ||
+            "[postback]";
+
           const saved = await saveInboundMessage(pageId, userPsid, text);
           const m = saved.message;
 
           broadcastMessage(saved.conversationId, {
             id: m.id,
-            direction: m.direction,
+            direction: m.direction,      // "IN"
             text: m.text,
             createdAt: m.createdAt,
             status: m.status,
           });
+
           continue;
         }
 
-        // CASE: khác (delivery/read) -> chỉ log
+        // ===== CASE 3: delivery / read / các event khác – chỉ log cho biết =====
         if (ev.delivery) console.log("[FB DELIVERY]", ev.delivery);
         if (ev.read) console.log("[FB READ]", ev.read);
       }
     }
 
+    // Facebook chỉ cần 200 để không retry
     return res.status(200).send("EVENT_RECEIVED");
   } catch (e) {
     console.error("[FB WEBHOOK][ERROR]", e);

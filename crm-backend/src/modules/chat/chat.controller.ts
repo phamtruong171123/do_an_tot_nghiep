@@ -1,4 +1,7 @@
 import { Request, Response } from "express";
+import { PrismaClient } from "@prisma/client";  
+const prisma = new PrismaClient();
+
 import {
   assignConversation,
   getConversationWithChannel,
@@ -27,11 +30,11 @@ export async function listConversationsHandler(req: Request, res: Response) {
       type: c.channel.type,
       externalUserId: c.externalUserId,
       title: c.title,
-      avatarUrl: `https://graph.facebook.com/${c.externalUserId}/picture?type=normal`,
+      avatarUrl: c.avataUrl || null,
       lastMessageSnippet: c.lastMessageText || "",
       lastMessageAt: c.lastMessageAt || c.updatedAt,
       assignee: c.assignee ? { id: c.assignee.id, name: c.assignee.username } : null,
-      unread: 0,
+      unread: c.unreadCount ?? 0,
     })),
   });
 }
@@ -97,4 +100,18 @@ export async function assignConversationHandler(req: Request, res: Response) {
   } catch (e: any) {
     return res.status(400).json({ error: e?.message || "Assign failed" });
   }
+}
+
+export async function markConversationRead(req: Request, res: Response) {
+  const id = req.params.id;
+
+  const conv = await prisma.conversation.update({
+    where: { id },
+    data: { unreadCount: 0 },
+  });
+
+  res.json({
+    id: conv.id,
+    unread: conv.unreadCount,
+  });
 }

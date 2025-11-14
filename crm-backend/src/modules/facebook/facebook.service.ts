@@ -10,7 +10,34 @@ export async function getPageAccessToken(pageId: string) {
   return channel.pageAccessToken;
 }
 
-/** Gửi tin nhắn văn bản qua Graph API – giống hệt request cURL */
+export async function fetchFacebookUserProfile( pageId: string,psid: string) {
+  const token =
+    (await getPageAccessToken(pageId)) || process.env.FB_PAGE_ACCESS_TOKEN;
+  if (!token) throw new Error("Missing PAGE-ACCESS-TOKEN");
+  const url= new URL(`https://graph.facebook.com/v24.0/${psid}`);
+  url.searchParams.set("fields", "first_name,last_name,profile_pic");
+  url.searchParams.set("access_token", token);
+  console.log("Fetching FB user profile:", url.toString());
+  try {
+    const res= await fetch(url.toString());
+    const data= await res.json();
+  console.log("Fetched FB user profile data:", data);
+  return {
+    name: `${data.last_name || ""} ${data.first_name || ""}`.trim() || "Facebook User",
+    avatarUrl: data.profile_pic || null,
+  };
+  } catch (error) {
+    console.warn("Error fetching FB user profile:", error);
+    return {
+      name: "Facebook User",
+      avatarUrl: null,
+    };
+  }
+ 
+  
+}
+
+/** Gửi tin nhắn văn bản qua Graph API */
 export async function sendTextMessageViaGraph(
   pageId: string,
   psid: string,
