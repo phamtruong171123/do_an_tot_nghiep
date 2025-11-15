@@ -23,7 +23,7 @@ export default function AdminLayout({me}) {
     { to: "/app/admin/dashboard", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
     { to: "/app/admin/chat",      label: "Chat",      iconClass: "fa-solid fa-comments" },
     { to: "/app/admin/users",     label: "Users",     iconClass: "fa-solid fa-user-gear" },
-    { to: "/app/admin/tasks",     label: "Tasks",     iconClass: "fa-solid fa-list-check" },
+    { to: "/app/admin/tickets",     label: "Tickets",     iconClass: "fa-solid fa-list-check" },
     { to: "/app/admin/contacts",  label: "Contacts",  iconClass: "fa-solid fa-address-book" },
     
   ];

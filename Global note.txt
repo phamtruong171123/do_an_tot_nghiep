@@ -2,3 +2,157 @@ Websocket :Khi khách nhắn trên Facebook, webhook nhận sự kiện → back
 vấn đề : hiện tại đang emit cho tất cả user và chỉ lọc với conversation
 
 search: dùng usecontext gủi dữ liệu từ ô search header, dùng usememo để search ( input đổi mới search) vì mỗi lần re render thì filter lại phải chạy lại
+
+nghiệp vụ ticket:
+Luồng gán người phụ trách
+Trường hợp 1: Agent đang chat → tạo ticket
+
+Agent A đang trả lời khách trong màn hình Chat.
+
+Thấy vấn đề phức tạp, bấm nút “Tạo ticket”.
+
+Form tạo ticket mở lên, hệ thống auto gán:
+
+assigneeId = id của Agent A
+
+createdById = id của Agent A
+
+Agent chỉ cần:
+
+Chỉnh lại subject (nếu muốn),
+
+Chọn priority/status đơn giản (nếu có),
+
+Save.
+
+⇒ Nghiệp vụ: “Ai tạo ticket thì mặc định là người phụ trách”.
+
+Trường hợp 2: Admin tạo ticket từ Chat
+
+Admin mở màn hình Chat (cũng xem hội thoại được).
+
+Thấy case nào đó cần tạo ticket cho agent xử lý.
+
+Bấm “Tạo ticket”:
+
+Nếu Admin biết giao cho ai → chọn assignee trong dropdown (list agent).
+
+Nếu chưa rõ giao ai → để trống assigneeId (ticket Unassigned).
+
+Sau đó:
+
+Ticket vào list “Unassigned”.
+
+Agent vào list ticket, lọc “Unassigned” → bấm “Nhận ticket” (Take / Assign to me).
+
+Hệ thống set assigneeId = id agent đó.
+
+Trường hợp 3: Chuyển người phụ trách
+
+Ticket đang assign cho Agent A.
+
+Admin (hoặc chính Agent A nếu bạn cho phép) có thể đổi sang Agent B:
+
+Mở ticket detail → dropdown Assignee → chọn agent B → Save.
+
+Hệ thống cập nhật lại assigneeId = B.
+
+=> Rất giống cách bạn làm “assign conversation” trong chat, nhưng bền hơn vì ticket sống lâu hơn.
+
+4. Trạng thái ticket (status) – giữ cực đơn giản
+
+Đề xuất 3 trạng thái cho MVP:
+
+OPEN – mới tạo, đang xử lý.
+
+PENDING – tạm chờ (chờ khách, chờ bộ phận khác,…).
+
+CLOSED – đã hoàn thành, đóng lại.
+
+Nghiệp vụ:
+
+Khi tạo ticket → status = OPEN.
+
+Khi agent:
+
+Đang xử lý → giữ OPEN.
+
+Cần chờ phản hồi từ khách hoặc nội bộ → chuyển PENDING.
+
+Xử lý xong, không cần theo dõi → chuyển CLOSED.
+
+Không cần SLA phức tạp lúc này, chỉ cần vậy là đủ làm đồ án + chạy thật.
+
+5. Mối quan hệ giữa Ticket & Chat trong nghiệp vụ
+Từ Chat → Ticket
+
+Agent đang xem hội thoại với khách:
+
+Nếu chỉ hỏi đáp ngắn → cứ chat, không tạo ticket.
+
+Nếu là yêu cầu cần xử lý lâu dài → bấm “Tạo ticket”.
+
+Ticket được link đến conversationId → mở ticket vẫn xem lại được nội dung chat gốc.
+
+Từ Ticket → Chat
+
+Trong màn hình Ticket, bạn có thể:
+
+Hiện phần “Conversation” bên cạnh hoặc nút “Xem cuộc hội thoại”.
+
+Khi agent cập nhật ticket (ví dụ comment “Đã xử lý xong, anh/chị kiểm tra lại giúp em”), có 2 cách:
+
+Chỉ ghi chú nội bộ (không gửi cho khách).
+
+Hoặc chuyển sang màn hình Chat để gõ tin nhắn gửi lại khách.
+
+MVP: không cần auto-sync comment ticket ra Facebook, chỉ cần:
+
+Chat để nói chuyện với khách.
+
+Ticket để quản lý “việc nội bộ”.
+
+Khi quen rồi, sau này nâng cấp:
+
+Comment “public” trong ticket sẽ tự gửi ra kênh Chat.
+
+6. Tổng kết nghiệp vụ theo kiểu checklist
+Khi KH nhắn vào Facebook
+
+Webhook tạo/ cập nhật Conversation.
+
+Agent mở Chat, trả lời.
+
+Nếu thấy cần theo dõi lâu dài → tạo Ticket:
+
+Gắn với conversation + customer.
+
+Mặc định assignee = agent đang mở Chat.
+
+Trong màn hình Ticket
+
+Agent thấy:
+
+Ticket của mình (My tickets).
+
+Unassigned (nếu cho xem) → có thể bấm “Nhận ticket” (gán cho mình).
+
+Admin thấy:
+
+Tất cả ticket.
+
+Có thể gán ticket cho agent bất kỳ.
+
+Mỗi ticket
+
+Có:
+
+subject, status, assignee, customer, conversation.
+
+Agent:
+
+Update trạng thái: OPEN → PENDING → CLOSED.
+
+Ghi chú nội bộ.
+
+Khi cần trả lời khách → quay lại Chat.

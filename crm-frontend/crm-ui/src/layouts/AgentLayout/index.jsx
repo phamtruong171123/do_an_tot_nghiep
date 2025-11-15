@@ -22,7 +22,7 @@ export default function AgentLayout({me}) {
  const items = [
     { to: "/app/agent/dashboard", label: "Dashboard", iconClass: "fa-solid fa-gauge" },
     { to: "/app/agent/chat",      label: "Chat",      iconClass: "fa-solid fa-comments" },
-    { to: "/app/agent/tasks",     label: "Tasks",     iconClass: "fa-solid fa-list-check" },
+    { to: "/app/agent/tickets",     label: "Tickets",     iconClass: "fa-solid fa-list-check" },
     { to: "/app/agent/contacts",  label: "Contacts",  iconClass: "fa-solid fa-address-book" },
     
   ];

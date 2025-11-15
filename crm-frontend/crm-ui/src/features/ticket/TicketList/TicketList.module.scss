@@ -1,0 +1,129 @@
+.tableWrap {
+  flex: 1;
+  overflow: auto;
+  margin-top: 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  padding: 10px 6px;
+  text-align: left;
+}
+
+thead tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+tbody tr + tr {
+  border-top: 1px solid #f3f4f6;
+}
+
+.colCode {
+  width: 120px;
+}
+
+.colDue {
+  width: 120px;
+}
+
+.colAssignee {
+  width: 120px;
+}
+
+.colStatus,
+.colPriority {
+  width: 110px;
+}
+
+.code {
+  color: #6b7280;
+}
+
+.duePill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background-color: #ecfdf3;
+  color: #15803d;
+}
+
+.duePill.overdue {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.subjectMain {
+  font-weight: 500;
+}
+
+.subjectSub {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.assignee {
+  color: #374151;
+
+}
+
+.statusPill,
+.prioPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+
+}
+
+/* Status colors */
+.statusPill.open {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+.statusPill.pending {
+  background-color: #fef9c3;
+  color: #92400e;
+}
+.statusPill.closed {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+
+/* Priority colors */
+.prioPill.low {
+  background-color: #ecfdf3;
+  color: #15803d;
+}
+.prioPill.normal {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+.prioPill.high {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+.prioPill.urgent {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.empty {
+  padding: 24px 8px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.edit {
+  text-align: center;
+  color: #6b7280;
+  cursor: pointer;
+}

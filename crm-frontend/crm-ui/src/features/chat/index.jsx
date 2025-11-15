@@ -142,7 +142,7 @@ export default function Chat() {
         } else {
           // conversation mới hoàn toàn (phòng trường hợp tương lai)
           const title =
-            message.senderName ||
+            message.psid ||
             message.customerName ||
             "Khách hàng Facebook";
           const newThread = {

@@ -6,7 +6,8 @@ export default function ThreadListItem({ item, active, onClick }) {
   const p = item.participants?.[0];
   const avatar = item.iconUrl || p?.avatarUrl;
 
-  const avatarSrc = avatar || defaultAvatar; // 👈 null thì dùng ảnh mặc định
+  const avatarSrc = avatar || defaultAvatar; 
+  console.log("Avatar Source:", avatarSrc); // Debugging line
 
   return (
     <button

@@ -8,6 +8,7 @@ import Login from "../pages/Login";
 import ChangePassword from "../pages/ChangePassword";
 import UserManagement from "../pages/UserManagement"; 
 import Chat from "../features/chat";
+import TicketPage from "../features/ticket";
 
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
@@ -52,7 +53,7 @@ export default function AppRoutes() {
           <Route path="dashboard" element={<Placeholder title="Admin Dashboard" />} />
           <Route path="chat"      element={<Chat/>} />
           <Route path="users"     element={<UserManagement />} />
-          <Route path="tasks"     element={<Placeholder title="Tasks" />} />
+          <Route path="tickets"     element={<TicketPage/>} />
           <Route path="contacts"  element={<Placeholder title="Contacts" />} />
           
         </Route>
@@ -62,7 +63,7 @@ export default function AppRoutes() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Placeholder title="Agent Dashboard" />} />
           <Route path="chat"      element={<Chat/>} />
-          <Route path="tasks"     element={<Placeholder title="Tasks" />} />
+          <Route path="tickets"     element={<TicketPage/>} />
           <Route path="contacts"  element={<Placeholder title="Contacts" />} />
           
         </Route>

@@ -6,6 +6,7 @@ import userRoutes from './modules/user/user.routes';
 import presenceRoutes from './modules/presence/presence.routes';
 import facebookRoutes from './modules/facebook/facebook.routes';
 import chatRouter from './modules/chat/chat.routes';
+import ticketRoutes from './modules/ticket/ticket.routes';
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ]
@@ -32,6 +33,7 @@ app.use('/api/users', userRoutes);
 app.use('/api', presenceRoutes)
 app.use('/api/facebook', facebookRoutes);
 app.use('/api/chat', chatRouter);
+app.use('/api/tickets', ticketRoutes);
 
 const PORT = Number(process.env.PORT ?? 4000);
 
