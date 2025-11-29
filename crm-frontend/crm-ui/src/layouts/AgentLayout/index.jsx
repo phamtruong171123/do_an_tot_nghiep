@@ -5,6 +5,8 @@ import AppHeader from "../../components/AppHeader";
 import classNames from "classnames/bind";
 import styles from "./AgentLayout.module.scss";
 import { useNavigate } from "react-router-dom";
+import ChatUnreadSocketBridge from "../../features/chat/UnreadConversation/ChatUnreadSocketBrige";
+import ChatUnreadInitializer from "../../features/chat/UnreadConversation/ChatUnReadInitializer";
 import   { HeaderSearchProvider }  from "../../contexts/HeaderSearchContext";
 import usePresenceHeartbeat from "../../hooks/usePresenceHeartbeat";
 const cx = classNames.bind(styles);
@@ -24,15 +26,19 @@ export default function AgentLayout({me}) {
     { to: "/app/agent/chat",      label: "Chat",      iconClass: "fa-solid fa-comments" },
     { to: "/app/agent/tickets",     label: "Tickets",     iconClass: "fa-solid fa-list-check" },
     { to: "/app/agent/contacts",  label: "Contacts",  iconClass: "fa-solid fa-address-book" },
-    
+    { to: "/app/agent/faq", label: "FAQ", iconClass: "fa-regular fa-circle-question" },
+
   ];
 
   return (
     <HeaderSearchProvider>
+      <ChatUnreadInitializer />
+      {/* Lắng socket để cập nhật realtime */}
+      <ChatUnreadSocketBridge />
       <div className={cx("layout")}>
-        <Sidebar items={items} />
+        <div className={cx("sidebar-wrap")}><Sidebar items={items} /></div>
         <main className={cx("main")}>
-          <AppHeader user={me} onChangePassword={onChangePassword} onLogout={onLogout} />
+          <div className={cx("header-wrap")}><AppHeader user={me} onChangePassword={onChangePassword} onLogout={onLogout} /></div>
           <div className={cx("content")}>
             <Outlet />
           </div>

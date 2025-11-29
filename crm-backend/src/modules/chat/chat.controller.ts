@@ -49,6 +49,7 @@ export async function listMessagesHandler(req: Request, res: Response) {
       id: m.id,
       direction: m.direction,
       text: m.text,
+      sentBy: m.sentBy,
       createdAt: m.createdAt,
       status: m.status,
     })),
@@ -65,12 +66,13 @@ export async function postMessageHandler(req: Request, res: Response) {
 
   // gửi ra Facebook
   const fb = await sendTextMessageViaGraph(conv.channel.pageId, conv.externalUserId, text);
-  const msg = await saveOutboundMessage(conv.id, text, fb?.message_id);
+  const msg = await saveOutboundMessage(conv.id, text, fb?.message_id,  );
 
   broadcastMessage(conv.id, {
     id: msg.id,
     direction: msg.direction,
     text: msg.text,
+    sentBy:msg.sentBy,
     createdAt: msg.createdAt,
     status: msg.status,
   });

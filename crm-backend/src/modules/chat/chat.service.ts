@@ -1,70 +1,114 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, MessageSenderType } from "@prisma/client";
 import { fetchFacebookUserProfile } from "../facebook/facebook.service";
+import { findOrCreateCustomerByExternalId } from "../customer/customer.service";
 const prisma = new PrismaClient();
 
-export async function findOrCreateConversationByPageAndUser(pageId: string, externalUserId: string) {
-  const channel = await prisma.channel.findUnique({ where: { pageId } });
-  if (!channel) throw new Error("Channel not found for pageId");
 
-  let conv = await prisma.conversation.findUnique({
-    where: { channelId_externalUserId: { channelId: channel.id, externalUserId } },
+// Tìm hoặc tạo Conversation dựa trên pageId và externalUserId (PSID).
+export async function findOrCreateConversationByPageAndUser(
+  pageId: string,
+  externalUserId: string,
+  opts?: { title?: string | null; avatarUrl?: string | null }
+) {
+  
+
+  // 1. Tìm channel theo pageId
+  const channel = await prisma.channel.findUnique({
+    where: { pageId },
+  });
+  if (!channel) {
+    throw new Error(`Channel not found for pageId=${pageId}`);
+  }
+  
+  const profile = await fetchFacebookUserProfile(pageId, externalUserId);
+  const { name: title, avatarUrl } = profile;
+  // 2. Tìm / tạo customer theo externalId = PSID
+  const customer = await findOrCreateCustomerByExternalId({
+    externalId: externalUserId,
+    name: title ?? undefined,
+    avatarUrl: avatarUrl ?? undefined,
   });
 
-  if (!conv) {
-    const defaultAssigneeId = process.env.DEFAULT_ASSIGNEE_USER_ID
-      ? Number(process.env.DEFAULT_ASSIGNEE_USER_ID)
-      : undefined;
+  // 3. Tìm conversation theo (channelId, externalUserId)
+  let conversation = await prisma.conversation.findUnique({
+    where: {
+      channelId_externalUserId: {
+        channelId: channel.id,
+        externalUserId,
+      },
+    },
+  });
 
-      //lấy tên và avatar từ facebook
-      let title: string = "Facebook User";
-      let avatarUrl: string | null = null;
-      try {
-        const profile = await fetchFacebookUserProfile(pageId, externalUserId);
-        title = profile.name;
-        avatarUrl = profile.avatarUrl;
-      } catch (error) {
-        console.warn("Failed to fetch Facebook user profile:", error);
-      }
-
-    conv = await prisma.conversation.create({
+  if (!conversation) {
+    //  Chưa có → tạo mới, gắn luôn customerId
+    conversation = await prisma.conversation.create({
       data: {
         channelId: channel.id,
         externalUserId,
-        title: title || "Facebook User",
-        assigneeId: defaultAssigneeId,
-        assignedAt: defaultAssigneeId ? new Date() : null,
+        title: title || null,
         avataUrl: avatarUrl || null,
+        customerId: customer.id,     
+      },
+    });
+  } else if (!conversation.customerId || conversation.customerId !== customer.id) {
+    // Đã có nhưng chưa gắn customer / gắn sai → update
+    conversation = await prisma.conversation.update({
+      where: { id: conversation.id },
+      data: {
+        customerId: customer.id,
+        ...(title !== undefined ? { title } : {}),
+        ...(avatarUrl !== undefined ? { avataUrl: avatarUrl } : {}),
       },
     });
   }
-  return { channel, conv };
+
+  // Trả lại cho caller
+  return { conversation, channel };
 }
 
-export async function saveInboundMessage(pageId: string, externalUserId: string, text: string, mid?: string) {
-  const { conv } = await findOrCreateConversationByPageAndUser(pageId, externalUserId);
+export async function saveInboundMessage(
+  pageId: string,
+  externalUserId: string,
+  text: string,
+  mid?: string
+) {
+  const { conversation } = await findOrCreateConversationByPageAndUser(
+    pageId,
+    externalUserId
+  );
 
   const msg = await prisma.message.upsert({
-    where: { externalMessageId: mid ?? `__nil_${pageId}_${externalUserId}_${Date.now()}` },
+    where: {
+      externalMessageId:
+        mid ?? `__nil_${pageId}_${externalUserId}_${Date.now()}`,
+    },
     update: {},
     create: {
-      conversationId: conv.id,
+      conversationId: conversation.id,
       direction: "IN",
       text,
+      sentBy: "CUSTOMER", 
       externalMessageId: mid ?? null,
     },
   });
 
   await prisma.conversation.update({
-    where: { id: conv.id },
-    data: { lastMessageAt: msg.createdAt, lastMessageText: text , unreadCount: { increment: 1 } },
+    where: { id: conversation.id },
+    data: {
+      lastMessageAt: msg.createdAt,
+      lastMessageText: text,
+      unreadCount: { increment: 1 },
+    },
   });
 
-  return { conversationId: conv.id, message: msg };
+  return { conversationId: conversation.id, message: msg };
 }
 
-export async function saveOutboundMessage(conversationId: string, text: string, externalMessageId?: string) {
+export async function saveOutboundMessage(conversationId: string, text: string, externalMessageId?: string,
+  sentBy: MessageSenderType = "AGENT"
+) {
   const msg = await prisma.message.create({
-    data: { conversationId, direction: "OUT", text, externalMessageId: externalMessageId ?? null },
+    data: { conversationId, direction: "OUT", text,sentBy, externalMessageId: externalMessageId ?? null },
   });
 
   await prisma.conversation.update({
@@ -118,3 +162,19 @@ export async function assignConversation(conversationId: string, userId: number)
     include: { assignee: { select: { id: true, username: true } } },
   });
 }
+
+// ví dụ: đếm số hội thoại mà agent hiện tại có unread > 0
+export async function getUnreadConversationCountForUser(userId: number) {
+  return prisma.conversation.count({
+    where: {
+      // tuỳ hệ thống của bạn:
+      // - nếu dùng assigneeId: chỉ đếm những cuộc hội thoại được gán cho user
+      // - hoặc đếm tất cả conv mà user có quyền xem
+      assigneeId: userId,
+      unreadCount: {
+        gt: 0,
+      },
+    },
+  });
+}
+

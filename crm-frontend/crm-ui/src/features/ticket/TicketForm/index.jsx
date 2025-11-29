@@ -11,120 +11,192 @@ const DEFAULT_VALUES = {
   status: "OPEN",
   priority: "NORMAL",
   assigneeName: "",
+  assigneeId: null,
 };
 
-export default function TicketForm({ open, mode, initialValues, onCancel, onSubmit }) {
-  // Hooks luôn gọi ở top
-  const [form, setForm] = React.useState(DEFAULT_VALUES);
+export default function TicketForm({
+  open,
+  mode,               // "create" | "edit"
+  initialValues,
+  onCancel,
+  onSubmit,
+  currentUser,         // optional: { id, username, fullName, role }
+  isAdmin = false,     // optional, mặc định false
+  assigneeOptions = [],// optional: [{ id, name, username, ... }]
+}) {
+  const [values, setValues] = React.useState(DEFAULT_VALUES);
 
-  // Khi mở modal hoặc initialValues đổi -> reset form
   React.useEffect(() => {
-    if (!open) return; // modal đóng thì thôi, không cần reset
-    setForm({
-      ...DEFAULT_VALUES,
-      ...(initialValues || {}),
-      dueAt: initialValues?.dueAt ? initialValues.dueAt.slice(0, 10) : "",
-    });
-  }, [open, initialValues]);
+    if (!open) return;
 
-  // Sau khi gọi hooks mới được return conditionally
+    if (mode === "edit" && initialValues) {
+      setValues({
+        ...DEFAULT_VALUES,
+        ...initialValues,
+        assigneeId:
+          typeof initialValues.assigneeId === "number"
+            ? initialValues.assigneeId
+            : null,
+      });
+    } else {
+      // create
+      setValues({
+        ...DEFAULT_VALUES,
+        assigneeName:
+          currentUser?.fullName || currentUser?.username || "",
+        assigneeId: null, 
+      });
+    }
+  }, [open, mode, initialValues, currentUser, isAdmin]);
+
   if (!open) return null;
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = e.target.value;
+    setValues((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = {
-      ...initialValues,
-      ...form,
-      dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : null,
-    };
-    onSubmit && onSubmit(payload);
+
+    const payload = { ...values };
+
+    // AGENT: không gửi assigneeId, backend tự gán = authUser.id
+    if (!isAdmin) {
+      delete payload.assigneeId;
+    } else {
+      // ADMIN: convert sang number hoặc null
+      if (payload.assigneeId === "" || payload.assigneeId === null) {
+        payload.assigneeId = null;
+      } else {
+        payload.assigneeId = Number(payload.assigneeId) || null;
+      }
+    }
+
+    onSubmit(payload);
   };
 
   return (
     <div className={cx("overlay")}>
       <div className={cx("modal")}>
         <div className={cx("header")}>
-          <h3 className={cx("title")}>
-            {mode === "edit" ? "Edit ticket" : "Add new ticket"}
-          </h3>
-          <button className={cx("closeBtn")} type="button" onClick={onCancel}>
+          <h2 className={cx("title")}>
+            {mode === "edit" ? "Edit ticket" : "Create ticket"}
+          </h2>
+          <button
+            type="button"
+            className={cx("closeBtn")}
+            onClick={onCancel}
+          >
             ×
           </button>
         </div>
 
         <form className={cx("form")} onSubmit={handleSubmit}>
+          {/* Subject */}
           <div className={cx("row")}>
-            <label className={cx("label")}>Subject</label>
+            <label className={cx("label")}>
+              Subject <span>*</span>
+            </label>
             <input
+              type="text"
               className={cx("input")}
-              value={form.subject}
+              value={values.subject}
               onChange={handleChange("subject")}
               placeholder="Ticket subject"
               required
             />
           </div>
 
+          
           <div className={cx("row")}>
             <label className={cx("label")}>Customer</label>
             <input
+              type="text"
               className={cx("input")}
-              value={form.customerName}
+              value={values.customerName}
               onChange={handleChange("customerName")}
               placeholder="Customer name (optional)"
             />
           </div>
 
+          {/* Status + Priority + Due date (3 cột) */}
           <div className={cx("rowGrid")}>
-            <div>
-              <label className={cx("label")}>Due date</label>
-              <input
-                className={cx("input")}
-                type="date"
-                value={form.dueAt}
-                onChange={handleChange("dueAt")}
-              />
-            </div>
-            <div>
+            <div className={cx("row")}>
               <label className={cx("label")}>Status</label>
               <select
                 className={cx("input")}
-                value={form.status}
+                value={values.status}
                 onChange={handleChange("status")}
               >
-                <option value="OPEN">OPEN</option>
-                <option value="PENDING">PENDING</option>
-                <option value="CLOSED">CLOSED</option>
+                <option value="OPEN">Open</option>
+                <option value="PENDING">Pending</option>
+                <option value="CLOSED">Closed</option>
               </select>
             </div>
-            <div>
+
+            <div className={cx("row")}>
               <label className={cx("label")}>Priority</label>
               <select
                 className={cx("input")}
-                value={form.priority}
+                value={values.priority}
                 onChange={handleChange("priority")}
               >
-                <option value="LOW">LOW</option>
-                <option value="NORMAL">NORMAL</option>
-                <option value="HIGH">HIGH</option>
-                <option value="URGENT">URGENT</option>
+                <option value="LOW">Low</option>
+                <option value="NORMAL">Normal</option>
+                <option value="HIGH">High</option>
+                <option value="URGENT">Urgent</option>
               </select>
+            </div>
+
+            <div className={cx("row")}>
+              <label className={cx("label")}>Due date</label>
+              <input
+                type="date"
+                className={cx("input")}
+                value={values.dueAt || ""}
+                onChange={handleChange("dueAt")}
+              />
             </div>
           </div>
 
+          {/* Assignee */}
           <div className={cx("row")}>
             <label className={cx("label")}>Assignee</label>
-            <input
-              className={cx("input")}
-              value={form.assigneeName}
-              onChange={handleChange("assigneeName")}
-              placeholder="Assignee name (mock)"
-            />
+            {isAdmin ? (
+              <select
+                className={cx("input")}
+                value={
+                  values.assigneeId != null
+                    ? String(values.assigneeId)
+                    : ""
+                }
+                onChange={handleChange("assigneeId")}
+              >
+                <option value="">(Unassigned)</option>
+                {assigneeOptions.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}{" "}
+                    {u.username ? `(${u.username})` : ""}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                className={cx("input")}
+                value={
+                  values.assigneeName ||
+                  currentUser?.fullName ||
+                  currentUser?.username ||
+                  ""
+                }
+                readOnly
+              />
+            )}
           </div>
 
+          {/* Footer buttons */}
           <div className={cx("footer")}>
             <button
               type="button"

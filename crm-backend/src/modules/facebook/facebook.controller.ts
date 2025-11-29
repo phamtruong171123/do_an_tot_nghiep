@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { saveInboundMessage, findOrCreateConversationByPageAndUser, saveOutboundMessage } from "../chat/chat.service";
 import { sendTextMessageViaGraph } from "./facebook.service";
 import { broadcastMessage } from "../chat/chat.socket";
+import { autoReplyByFaqIfMatch } from "../ai/aiSuggestion.service";
 
 /** GET /api/facebook/webhook (Facebook verify) */
 export function verifyWebhook(req: Request, res: Response) {
@@ -16,7 +17,7 @@ export function verifyWebhook(req: Request, res: Response) {
   return res.sendStatus(403);
 }
 
-/** POST /api/facebook/webhook (chỉ nhận tin NHẮN ĐẾN từ khách) */
+/** POST /api/facebook/webhook (nhận tin NHẮN ĐẾN từ khách) */
 export async function receiveWebhook(req: Request, res: Response) {
   try {
     const body = req.body;
@@ -34,73 +35,69 @@ export async function receiveWebhook(req: Request, res: Response) {
         if (!senderId || !recipientId) continue;
 
         // Theo thiết kế: webhook này CHỈ xử lý tin từ khách -> page
-        // => senderId luôn là PSID của khách
         const userPsid = senderId;
 
         const message = ev.message;
         const postback = ev.postback;
 
-        // ===== CASE 1: MESSAGE (text / attachment) =====
+        // Chuẩn hoá về 1 kiểu "inbound text"
+        let inboundText = "";
+        let mid: string | undefined = undefined;
+
         if (message) {
-          const mid = message.mid as string | undefined;
+          mid = message.mid as string | undefined;
 
           const textRaw = (message.text || "").trim();
-          const text =
+          inboundText =
             textRaw ||
             (Array.isArray(message.attachments) &&
             message.attachments.length > 0
               ? `[${message.attachments[0].type} attachment]`
               : "");
-
-          if (!text) continue; // không có nội dung thì bỏ qua
-
-          const saved = await saveInboundMessage(pageId, userPsid, text, mid);
-          const m = saved.message;
-
-          broadcastMessage(saved.conversationId, {
-            id: m.id,
-            direction: m.direction,      // "IN"
-            text: m.text,
-            createdAt: m.createdAt,
-            status: m.status,
-          });
-
-          continue;
-        }
-
-        // ===== CASE 2: POSTBACK (button, quick reply...) – coi như INBOUND =====
-        if (postback) {
-          const text =
+        } else if (postback) {
+          inboundText =
             String(postback.title || postback.payload || "").trim() ||
             "[postback]";
+        }
 
-          const saved = await saveInboundMessage(pageId, userPsid, text);
-          const m = saved.message;
-
-          broadcastMessage(saved.conversationId, {
-            id: m.id,
-            direction: m.direction,      // "IN"
-            text: m.text,
-            createdAt: m.createdAt,
-            status: m.status,
-          });
-
+        // Nếu không rơi vào message/postback hoặc không có nội dung xử lý
+        if (!inboundText) {
+          if (ev.delivery) console.log("[FB DELIVERY]", ev.delivery);
+          if (ev.read) console.log("[FB READ]", ev.read);
           continue;
         }
 
-        // ===== CASE 3: delivery / read / các event khác – chỉ log cho biết =====
-        if (ev.delivery) console.log("[FB DELIVERY]", ev.delivery);
-        if (ev.read) console.log("[FB READ]", ev.read);
+  
+        const saved = await saveInboundMessage(pageId, userPsid, inboundText, mid);
+        const m = saved.message;
+
+        // Broadcast INBOUND cho FE
+        broadcastMessage(saved.conversationId, {
+          id: m.id,
+          direction: m.direction, // "IN"
+          text: m.text,
+          sentBy:m.sentBy,
+          createdAt: m.createdAt,
+          status: m.status,
+        });
+
+        // AUTO-REPLY nếu match FAQ
+        await autoReplyByFaqIfMatch({
+          pageId,
+          psid: userPsid,
+          conversationId: saved.conversationId,
+          text: inboundText,
+        });
       }
     }
 
-    // Facebook chỉ cần 200 để không retry
-    return res.status(200).send("EVENT_RECEIVED");
-  } catch (e) {
-    console.error("[FB WEBHOOK][ERROR]", e);
-    return res.status(200).send("OK");
+    return res.sendStatus(200);
+  } catch (err) {
+    console.error("[FB webhook] error:", err);
+    return res.sendStatus(500);
   }
 }
+
 
 function normalizeAttachments(raw?: any[]) {
   if (!Array.isArray(raw)) return [];
@@ -132,7 +129,7 @@ export async function sendMessage(req: Request, res: Response) {
 
   try {
     
-    const { conv } = await findOrCreateConversationByPageAndUser(pageId, psid);
+    const { conversation: conv } = await findOrCreateConversationByPageAndUser(pageId, psid);
 
     // gửi ra Facebook
     const fb = await sendTextMessageViaGraph(pageId, psid, text);
@@ -145,6 +142,7 @@ export async function sendMessage(req: Request, res: Response) {
       id: msg.id,
       direction: msg.direction,
       text: msg.text,
+      sentBy:msg.sentBy,
       createdAt: msg.createdAt,
       status: msg.status,
     });

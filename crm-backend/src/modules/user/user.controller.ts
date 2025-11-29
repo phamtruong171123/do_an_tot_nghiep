@@ -13,7 +13,7 @@ export async function me(req: Request, res: Response) {
   const userId = Number(req.user!.id); // convert string to number
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return res.status(404).json({ message: 'Not found' });
-  res.json({ id: user.id, username: user.username, email: user.email, role: user.role, status: user.status });
+  res.json({ id: user.id, username: user.username, fullName:user.fullName, email: user.email, role: user.role, status: user.status });
 }
 
 // GET /api/users?q=&role=&status=&sort=createdAt:desc
@@ -58,6 +58,7 @@ export async function listUsers(req: Request, res: Response) {
         id: true,
         username: true,
         email: true,
+        fullName: true,
         role: true,
         status: true,
         agentProfile: {
@@ -86,6 +87,7 @@ export async function listUsers(req: Request, res: Response) {
         email: u.email,
         role: u.role,
         status: u.status,
+        fullName: u.fullName,
         agentProfile: {
           online: derivedOnline,
           lastOnlineAt: ap?.lastOnlineAt || null,
@@ -102,12 +104,12 @@ export async function getUser(req: Request, res: Response) {
   const id = Number(req.params.id); //  ép number
   const u = await prisma.user.findUnique({ where: { id } });
   if (!u) return res.status(404).json({ message: 'Not found' });
-  res.json({ id: u.id, username: u.username, email: u.email, role: u.role, status: u.status });
+  res.json({ id: u.id, username: u.username, fullName:u.fullName, email: u.email, role: u.role, status: u.status });
 }
 
 export async function createUser(req: Request, res: Response) {
   try {
-    const { username, email, password, role = 'AGENT', status = 'ACTIVE' } = req.body || {};
+    const { username, email, password, role = 'AGENT', status = 'ACTIVE',fullName } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ message: 'username & password required' });
     }
@@ -126,7 +128,8 @@ export async function createUser(req: Request, res: Response) {
         username,
         email: email ?? null,
         passwordHash: hash,
-        role: role as any,     
+        role: role as any,  
+        fullName: fullName as any,   
         status: status as any,
         agentProfile: {
           create: {
@@ -151,12 +154,13 @@ export async function createUser(req: Request, res: Response) {
 
 export async function updateUser(req: Request, res: Response) {
   const id = Number(req.params.id); //  ép number
-  const { role, status, password, username, email } = req.body as Partial<{
+  const { role, status, password, username, email,fullName } = req.body as Partial<{
     role: UserRole;
     status: UserStatus;
     password: string;
     username: string;
     email: string | null;
+    fullName:string;
   }>;
 
   // unique check nếu đổi username/email
@@ -180,6 +184,7 @@ export async function updateUser(req: Request, res: Response) {
   if (username) (data as any).username = username;
   if (typeof email !== 'undefined') (data as any).email = email ?? null;
   if (password) (data as any).passwordHash = await bcrypt.hash(password, 10);
+  if (fullName) (data as any).fullName = fullName;
 
   const updated = await prisma.user.update({ where: { id }, data });
   res.json({ id: updated.id, username: updated.username, email: updated.email, role: updated.role, status: updated.status });
@@ -220,7 +225,7 @@ export async function updateMe(req: Request, res: Response) {
     },
   });
 
-  res.json({ id: updated.id, username: updated.username, email: updated.email, role: updated.role, status: updated.status });
+  res.json({ id: updated.id, username: updated.username, email: updated.email,fullName: updated.fullName, role: updated.role, status: updated.status });
 }
 
 export async function changePassword(req: Request, res: Response) {

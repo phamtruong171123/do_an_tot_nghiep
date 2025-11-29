@@ -9,7 +9,7 @@ import EmptyState from "./EmptyState";
 
 import { ChatUnreadContext } from "../../contexts/ChatUnReadContext";
 import  {HeaderSearchContext}  from "../../contexts/HeaderSearchContext";
-import { fetchThreads, fetchMessages, sendMessage, markConversationRead } from "./api";
+import { fetchThreads, fetchMessages, sendMessage, markConversationRead ,normalizeMessage} from "./api";
 import { getChatSocket } from "./socket";
 
 export default function Chat() {
@@ -80,7 +80,8 @@ export default function Chat() {
 
   // mỗi lần threads thay đổi thì cập nhật tổng unread
   React.useEffect(() => {
-    const total = threads.reduce((sum, t) => sum + (t.unread || 0), 0);
+    const total = threads.reduce((sum, t) => sum + (t.unread > 0 ? 1 : 0), 0);
+
     setTotal(total);
   }, [threads, setTotal]);
 
@@ -112,85 +113,65 @@ export default function Chat() {
     };
   }, [activeThreadId]);
 
+  
   // ====== SOCKET: lắng message:new và cập nhật UI ======
-  React.useEffect(() => {
-    const socket = getChatSocket();
+React.useEffect(() => {
+  const socket = getChatSocket();
 
-    const handleNewMessage = ({ conversationId, message }) => {
-      const ts = message.createdAt || new Date().toISOString();
-      const text = message.text || "";
+  const handleNewMessage = ({ conversationId, message }) => {
+    const m = normalizeMessage(message); // 👈 CHUẨN HÓA, có sentBy
 
-      // 1) Cập nhật ThreadList: lastMessageSnippet, updatedAt, unread + đưa lên đầu
-      setThreads((prev) => {
-        let list = [...prev];
-        const idx = list.findIndex((t) => t.id === conversationId);
+    // 1) Cập nhật ThreadList
+    setThreads((prev) => {
+      let list = [...prev];
+      const idx = list.findIndex((t) => t.id === conversationId);
 
-        if (idx >= 0) {
-          const old = list[idx];
-          const updated = {
-            ...old,
-            lastMessageSnippet: text || old.lastMessageSnippet,
-            updatedAt: ts,
-            unread:
-              conversationId === activeThreadId
-                ? old.unread || 0 // đang mở -> không tăng
-                : (old.unread || 0) + 1, // thread khác -> +1
-          };
-          // đưa thread này lên đầu
-          list.splice(idx, 1);
-          list.unshift(updated);
-        } else {
-          // conversation mới hoàn toàn (phòng trường hợp tương lai)
-          const title =
-            message.psid ||
-            message.customerName ||
-            "Khách hàng Facebook";
-          const newThread = {
-            id: conversationId,
-            title,
-            iconUrl: message.avatarUrl || null,
-            participants: [
-              {
-                id: message.senderId || "unknown",
-                name: title,
-                avatarUrl: message.avatarUrl || null,
-              },
-            ],
-            lastMessageSnippet: text,
-            updatedAt: ts,
-            unread: conversationId === activeThreadId ? 0 : 1,
-          };
-          list = [newThread, ...list];
-        }
+      if (idx >= 0) {
+        const old = list[idx];
+        const updated = {
+          ...old,
+          lastMessageSnippet: m.text || old.lastMessageSnippet,
+          updatedAt: m.sentAt || old.updatedAt,
+          lastMessageSentBy: m.sentBy || old.lastMessageSentBy,   
+          unread:
+            conversationId === activeThreadId
+              ? old.unread || 0
+              : (old.unread || 0) + 1,
+        };
 
-        return list;
-      });
+        list.splice(idx, 1);
+        list.unshift(updated);
+      } else {
+        // conversation mới
+        const newThread = {
+          id: conversationId,
+          title: "Khách hàng Facebook",
+          iconUrl: null,
+          participants: [],
+          lastMessageSnippet: m.text,
+          updatedAt: m.sentAt,
+          lastMessageSentBy: m.sentBy,
+          unread: conversationId === activeThreadId ? 0 : 1,
+        };
+        list = [newThread, ...list];
+      }
 
-      // 2) Nếu đang xem conversation đó thì append message
-      if (conversationId !== activeThreadId) return;
+      return list;
+    });
 
-      const dir = String(message.direction || "").toUpperCase();
-      const newMsg = {
-        id: message.id,
-        text: text,
-        html: null,
-        attachments: [],
-        sentAt: ts,
-        status: message.status || "",
-        isMine: dir === "OUT",
-      };
+    // 2) Nếu đang mở → append message vào MessageList
+    if (conversationId !== activeThreadId) return;
 
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
-    };
+    setMessages((prev) => {
+      if (prev.some((x) => x.id === m.id)) return prev;
+      return [...prev, m];
+    });
+  };
 
-    socket.on("message:new", handleNewMessage);
-    return () => {
-      socket.off("message:new", handleNewMessage);
-    };
-  }, [activeThreadId]);
+  socket.on("message:new", handleNewMessage);
+  return () => socket.off("message:new", handleNewMessage);
+}, [activeThreadId]);
+
 
   // ====== Gửi message (HTTP) ======
   const handleSend = async (text) => {
@@ -212,6 +193,7 @@ export default function Chat() {
           const updated = {
             ...old,
             lastMessageSnippet: msg.text || old.lastMessageSnippet,
+            lastMessageSentBy: msg.sentBy || old.lastMessageSentBy,
             updatedAt: msg.sentAt || msg.createdAt || new Date().toISOString(),
             unread: 0,
           };

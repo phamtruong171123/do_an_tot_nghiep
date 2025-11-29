@@ -7,7 +7,7 @@ export default function ThreadListItem({ item, active, onClick }) {
   const avatar = item.iconUrl || p?.avatarUrl;
 
   const avatarSrc = avatar || defaultAvatar; 
-  console.log("Avatar Source:", avatarSrc); // Debugging line
+  const isBotLast = item.lastMessageSentBy === "BOT"; 
 
   return (
     <button
@@ -22,7 +22,11 @@ export default function ThreadListItem({ item, active, onClick }) {
 
       <div className={styles.body}>
         <div className={styles.row}>
-          <div className={styles.title}>{item.title}</div>
+          <div className={styles.title}>{item.title}
+             {isBotLast && (
+              <span className={styles.botTag}>Bot</span>   
+            )}
+          </div>
           {item.updatedAt && (
             <time className={styles.time}>
               {new Date(item.updatedAt).toLocaleDateString()}

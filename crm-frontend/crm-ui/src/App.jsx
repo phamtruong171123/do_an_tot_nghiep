@@ -1,10 +1,15 @@
 import { ChatUnreadProvider } from "./contexts/ChatUnReadContext";
 import AppRoutes from "./routes";
+import { ToastProvider } from "./components/Toast";
+
 
 export default function App() {
   return (
-    <ChatUnreadProvider>
-      <AppRoutes />
-    </ChatUnreadProvider>
-);
+    <ToastProvider>
+      <ChatUnreadProvider>
+        <AppRoutes />
+        
+      </ChatUnreadProvider>
+    </ToastProvider>
+  );
 }

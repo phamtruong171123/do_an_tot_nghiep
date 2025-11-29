@@ -1,12 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styles from "./MessageList.module.scss";
 
 export default function MessageBubble({ msg, isMine, selected, onClick }) {
+   const isBot = msg?.sentBy === "BOT";
+   useEffect(()=>{
+
+   },[isBot])
   return (
     <div
       className={[
         styles.msg,
         isMine ? styles.mine : styles.theirs,
+         isBot ? styles.bot : "",   
         selected ? styles.selected : ""
       ].join(" ")}
       onClick={onClick}
@@ -27,6 +32,8 @@ export default function MessageBubble({ msg, isMine, selected, onClick }) {
           </ul>
         )}
         <div className={styles.meta}>
+          {isBot && <span className={styles.senderTag}>Bot</span>}
+
           <time>{new Date(msg.sentAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</time>
           {msg.status && <span className={styles.status}>{msg.status}</span>}
         </div>

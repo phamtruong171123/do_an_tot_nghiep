@@ -49,7 +49,7 @@ export type CreateTicketInput = {
   description?: string | null;
   priority?: TicketPriority;
   conversationId?: string | null;
-  customerId?: string | null;   // chưa gán customer thì null
+  customerId?: number | null;   
   assigneeId?: number | null;
   createdById: number;
 };
@@ -60,7 +60,7 @@ export async function createTicket(input: CreateTicketInput) {
     description = null,
     priority = "NORMAL",
     conversationId = null,
-    customerId = null,
+    customerId = input.customerId ?? null,
     assigneeId = null,
     createdById,
   } = input;
@@ -105,8 +105,8 @@ export async function listTickets(params: {
   if (mine) where.assigneeId = userId;
   if (q && q.trim()) {
     where.OR = [
-      { code: { contains: q, mode: "insensitive" } },
-      { subject: { contains: q, mode: "insensitive" } },
+      { code: { contains: q,  } },
+      { subject: { contains: q,  } },
     ];
   }
 
@@ -119,6 +119,9 @@ export async function listTickets(params: {
       include: {
         assignee: { select: { id: true, username: true } },
         customer: { select: { id: true, name: true } },
+        _count: {
+          select: {notes:true},
+        }
       },
     }),
     prisma.ticket.count({ where }),
@@ -160,8 +163,13 @@ export async function updateTicket(id: string, input: UpdateTicketInput) {
   const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) throw new Error("Ticket not found");
 
+  if(ticket.status === "CLOSED"){
+    throw new Error("Cannot update a closed ticket");
+  }
   const data: any = { ...input };
+  if(input.status==="CLOSED"){
 
+  }
   // nếu đổi priority thì tính lại dueAt
   if (input.priority && input.priority !== ticket.priority) {
     data.dueAt = calcDueAt(input.priority, new Date());

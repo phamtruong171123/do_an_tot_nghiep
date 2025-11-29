@@ -22,6 +22,7 @@ export default function MessageList({ items = [], selectedId: selProp, onSelect 
           key={m.id}
           msg={m}
           isMine={!!m.isMine}               // <- dùng flag trong dữ liệu
+          
           selected={m.id === selectedId}
           onClick={() => handleSelect(m.id)}
         />

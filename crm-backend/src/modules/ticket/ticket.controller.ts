@@ -1,6 +1,6 @@
 
 import { Request, Response } from "express";
-import { PrismaClient, TicketPriority, TicketStatus } from "@prisma/client";
+import { PrismaClient, TicketPriority, TicketStatus , UserStatus} from "@prisma/client";
 import { createTicket, listTickets, getTicket, updateTicket } from "./ticket.service";
 import { findOrCreateCustomerByExternalId } from "../customer/customer.service";
 
@@ -148,6 +148,7 @@ export async function listTicketsHandler(req: Request, res: Response) {
           : null,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
+        notesCount: t._count?.notes ?? 0,
       })),
       total: data.total,
     });
@@ -202,11 +203,12 @@ export async function getTicketHandler(req: Request, res: Response) {
   }
 }
 
+// Tạo ticket mới theo vai trò của user
 export async function createTicketHandler(req: Request, res: Response) {
   const authUser = (req as any).user as AuthUser | undefined;
   if (!authUser) return res.status(401).json({ message: "Unauthenticated" });
 
-  const { id: userId } = authUser;
+  const { id: userId, role } = authUser;
 
   const {
     subject,
@@ -220,7 +222,7 @@ export async function createTicketHandler(req: Request, res: Response) {
     description?: string;
     priority?: TicketPriority;
     conversationId?: string;
-    customerId?: string;
+    customerId?: number | null;
     assigneeId?: number;
   };
 
@@ -229,13 +231,36 @@ export async function createTicketHandler(req: Request, res: Response) {
   }
 
   try {
+    let finalAssigneeId: number | null = null;
+
+    if (role === "ADMIN") {
+      if (assigneeId != null) {
+        const user = await prisma.user.findUnique({
+          where: { id: assigneeId },
+          select: { id: true, status: true },
+        });
+        if (!user) {
+          return res.status(400).json({ error: "Assignee not found" });
+        }
+        if (user.status !== UserStatus.ACTIVE) {
+          return res.status(400).json({ error: "Assignee is not active" });
+        }
+        finalAssigneeId = user.id;
+      } else {
+        finalAssigneeId = null; // admin không chọn thì để trống
+      }
+    } else {
+      // AGENT: luôn assign cho chính mình, không quan tâm body
+      finalAssigneeId = userId;
+    }
+
     const ticket = await createTicket({
       subject: subject.trim(),
       description: description || null,
       priority: priority || "NORMAL",
       conversationId: conversationId || null,
-      customerId: customerId || null,
-      assigneeId: assigneeId ?? null,
+      customerId: customerId ?? null,
+      assigneeId: finalAssigneeId,
       createdById: userId,
     });
 
@@ -261,25 +286,44 @@ export async function updateTicketHandler(req: Request, res: Response) {
   };
 
   try {
-    // Nếu không phải ADMIN thì chỉ được sửa ticket của mình (assignee hoặc người tạo)
     if (authUser.role !== "ADMIN") {
       const t = await prisma.ticket.findUnique({
         where: { id },
-        select: { assigneeId: true, createdById: true },
+        select: { assigneeId: true, createdById: true, status: true },
       });
+      
       if (!t) return res.status(404).json({ error: "Ticket not found" });
+      
       if (t.assigneeId !== authUser.id && t.createdById !== authUser.id) {
         return res.status(403).json({ error: "Forbidden" });
       }
     }
 
-    const ticket = await updateTicket(id, {
+    const dataToUpdate: any = {
       subject,
       description,
       status,
       priority,
-      assigneeId, // cho phép ADMIN/owner đổi luôn (chuyển nhượng thì dùng API riêng bên dưới)
-    });
+    };
+
+    if (authUser.role === "ADMIN" && assigneeId !== undefined) {
+      dataToUpdate.assigneeId = assigneeId;
+    }
+
+    const ticket = await updateTicket(id, dataToUpdate);
+
+
+    // nếu đổi status thì note lại
+    if (status) {
+      await prisma.ticketNote.create({
+        data: {
+          ticketId: ticket.id,
+          authorId: authUser.id,
+          content: `Trạng thái ticket được cập nhật thành ${status}.`,
+          isInternal: true, // note nội bộ
+        },
+      });
+    }
 
     return res.json(ticket);
   } catch (e: any) {
@@ -405,4 +449,89 @@ export async function createTicketFromConversationHandler(
       .json({ error: "Failed to create ticket from conversation" });
   }
 }
+
+// ========== Quản lý ghi chú (notes) cho ticket ==========
+
+// Liệt kê ghi chú của ticket
+// src/modules/ticket/ticket.controller.ts (hoặc service)
+export async function listTicketNotesHandler(req: Request, res: Response) {
+  const ticketId = req.params.id;
+
+  try {
+    const notes = await prisma.ticketNote.findMany({
+      where: { ticketId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        author: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Nếu muốn trả phẳng:
+    const payload = notes.map((n) => ({
+      id: n.id,
+      ticketId: n.ticketId,
+      authorId: n.authorId,
+      authorName: n.author?.fullName || n.author?.email || `User #${n.authorId}`,
+      content: n.content,
+      isInternal: n.isInternal,
+      createdAt: n.createdAt,
+    }));
+
+    return res.json(payload);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: "Failed to fetch ticket notes" });
+  }
+}
+
+
+// Tạo ghi chú cho ticket
+export async function createTicketNoteHandler(req: Request, res: Response) {
+  const user = (req as any).user as AuthUser | undefined;
+  if (!user) return res.status(401).json({ message: "Unauthenticated" });
+
+  const ticketId = req.params.id;
+  const { content, isInternal } = req.body as {
+    content?: string;
+    isInternal?: boolean;
+  };
+
+  if (!content || !content.trim()) {
+    return res.status(400).json({ message: "content required" });
+  }
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+    select: { id: true },
+  });
+
+  if (!ticket) {
+    return res.status(404).json({ message: "Ticket not found" });
+  }
+
+  const note = await prisma.ticketNote.create({
+    data: {
+      ticketId,
+      authorId: user.id,
+      content: content.trim(),
+      isInternal: isInternal ?? true,
+    },
+    include: {
+      author: {
+        select: { id: true, username: true, fullName: true },
+      },
+    },
+  });
+
+  return res.status(201).json(note);
+}
+
+
+
 

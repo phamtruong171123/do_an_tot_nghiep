@@ -17,6 +17,15 @@ enum UserStatus {
   INACTIVE
 }
 
+enum CustomerSegment {
+  POTENTIAL // Khách hàng tiềm năng
+  NEW // Khách mới đã phát sinh giao dịch đầu tiên
+  ACTIVE // Khách đang sử dụng/dùng dịch vụ
+  VIP // Khách VIP/quan trọng
+  DROPPED // Đã rời bỏ / lâu không tương tác
+  SPAM // Spam / blacklist
+}
+
 model User {
   id           Int        @id @default(autoincrement())
   username     String     @unique
@@ -27,14 +36,17 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  fullName     String?  
-  
+  fullName String?
 
   agentProfile          AgentProfile?
-  // Quan hệ ngược: các conversation được assign cho user này
+  // Quan hệ ngược: các ticket được assign cho user này
   ticketsAssigned       Ticket[]       @relation("TicketAssignee")
+  // Ticket do user này tạo
   ticketsCreated        Ticket[]       @relation("TicketCreatedBy")
+  // Các conversation được assign cho user này
   assignedConversations Conversation[] @relation("ConversationAssignee")
+  // Các note trên ticket do user này tạo
+  ticketNotes           TicketNote[]   @relation("TicketNoteAuthor")
 }
 
 model AgentProfile {
@@ -63,19 +75,30 @@ model Channel {
 }
 
 model Customer {
-  /// ID = external user id (PSID của Facebook)
-  id String @id @db.VarChar(191)
+  id         Int     @id @default(autoincrement())
+  /// externalId = external user id (PSID của Facebook, sau này có thể là ZaloID, email...)
+  externalId String? @db.VarChar(191)
 
   name      String?
-  avatarUrl String?
+  avatarUrl String? @db.VarChar(1000)
   note      String?
+
+  // thông tin liên hệ
+  phoneNumber String? @db.VarChar(50)
+  email       String? @db.VarChar(50)
+  address     String? @db.VarChar(300)
+
+  segment CustomerSegment @default(POTENTIAL)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Quan hệ
-  conversations Conversation[]
-  tickets       Ticket[]
+  // Quan hệ: mỗi customer tối đa 01 conversation
+  conversation Conversation?
+  // 0..n ticket
+  tickets      Ticket[]
+
+  @@unique([externalId])
 }
 
 model Conversation {
@@ -84,7 +107,7 @@ model Conversation {
   externalUserId  String
   title           String?
   lastMessageAt   DateTime?
-  lastMessageText String?
+  lastMessageText String?   @db.VarChar(1000)
   avataUrl        String?   @db.VarChar(1000)
 
   unreadCount Int @default(0)
@@ -100,26 +123,35 @@ model Conversation {
 
   assignee User? @relation("ConversationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
-  customerId String?
+  // Link 0..1 với Customer
+  customerId Int?
   customer   Customer? @relation(fields: [customerId], references: [id])
 
   tickets Ticket[]
 
   @@unique([channelId, externalUserId])
+  @@unique([customerId])
   @@index([updatedAt])
   @@index([assigneeId])
+}
+
+enum MessageSenderType {
+  CUSTOMER
+  AGENT
+  BOT
 }
 
 model Message {
   id                String   @id @default(uuid())
   conversationId    String
   direction         String // "IN" | "OUT"
-  text              String?
+  text              String?  @db.Text
   externalMessageId String?  @unique
   status            String   @default("sent")
   createdAt         DateTime @default(now())
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sentBy       MessageSenderType @default(CUSTOMER)
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
 }
@@ -155,7 +187,7 @@ model Ticket {
   conversation   Conversation? @relation(fields: [conversationId], references: [id])
 
   // Link với Customer 
-  customerId String?
+  customerId Int?
   customer   Customer? @relation(fields: [customerId], references: [id])
 
   assigneeId Int?
@@ -167,9 +199,53 @@ model Ticket {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Note của ticket
+  notes TicketNote[]
+
   @@index([status])
   @@index([priority])
   @@index([assigneeId])
   @@index([dueAt])
   @@index([customerId])
+}
+
+model TicketNote {
+  id         String   @id @default(cuid())
+  ticketId   String
+  authorId   Int
+  content    String   @db.Text
+  isInternal Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation("TicketNoteAuthor", fields: [authorId], references: [id])
+
+  @@index([ticketId])
+  @@index([authorId])
+}
+
+model Faq {
+  id Int @id @default(autoincrement())
+
+  /// Câu hỏi chuẩn (FAQ Question)
+  question String @db.VarChar(1000)
+
+  /// Câu trả lời chuẩn (FAQ Answer)
+  answer String @db.Text
+
+  /// Tag chủ đề, ví dụ: ["chinh_sach", "doi_tra"]
+  /// Dùng Json cho linh hoạt
+  tags Json?
+
+  /// Ngôn ngữ, ví dụ: "vi", "en"
+  language String @default("vi")
+
+  /// Bật / tắt FAQ (chỉ FAQ active mới dùng cho AI)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([language])
 }

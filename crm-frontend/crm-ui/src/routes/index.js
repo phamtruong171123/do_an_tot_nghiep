@@ -9,7 +9,9 @@ import ChangePassword from "../pages/ChangePassword";
 import UserManagement from "../pages/UserManagement"; 
 import Chat from "../features/chat";
 import TicketPage from "../features/ticket";
-
+import CustomerPage from "../features/customer/CustomerPage";
+import CustomerDetailPage from "../features/customer/CustomerDetailPage";
+import FaqPage from "../features/faq/FaqPage";
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
   catch { return null; }
@@ -54,7 +56,9 @@ export default function AppRoutes() {
           <Route path="chat"      element={<Chat/>} />
           <Route path="users"     element={<UserManagement />} />
           <Route path="tickets"     element={<TicketPage/>} />
-          <Route path="contacts"  element={<Placeholder title="Contacts" />} />
+          <Route path="contacts"  element={<CustomerPage/>} />
+          <Route path="customers/:id" element={<CustomerDetailPage />} />
+          <Route path="faq" element={<FaqPage currentUser={me} />} />
           
         </Route>
 
@@ -64,8 +68,9 @@ export default function AppRoutes() {
           <Route path="dashboard" element={<Placeholder title="Agent Dashboard" />} />
           <Route path="chat"      element={<Chat/>} />
           <Route path="tickets"     element={<TicketPage/>} />
-          <Route path="contacts"  element={<Placeholder title="Contacts" />} />
-          
+          <Route path="contacts"  element={<CustomerPage/>} />
+          <Route path="customers/:id" element={<CustomerDetailPage />} />
+           <Route path="faq" element={<FaqPage currentUser={me} />} />
         </Route>
       </Route>
 

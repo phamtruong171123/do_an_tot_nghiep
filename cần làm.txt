@@ -1,0 +1,1 @@
+khi tin nhắn đến phải bấm vào chat thì mới hiện số cuộc unread 

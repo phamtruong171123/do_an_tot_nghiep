@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `message` ADD COLUMN `sentBy` ENUM('CUSTOMER', 'AGENT', 'BOT') NOT NULL DEFAULT 'CUSTOMER';

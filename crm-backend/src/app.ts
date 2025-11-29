@@ -7,6 +7,9 @@ import presenceRoutes from './modules/presence/presence.routes';
 import facebookRoutes from './modules/facebook/facebook.routes';
 import chatRouter from './modules/chat/chat.routes';
 import ticketRoutes from './modules/ticket/ticket.routes';
+import customerRoutes from './modules/customer/customer.routes';
+import faqRoutes from './modules/faq/faq.routes';
+import aiSuggestionRoutes from './modules/ai/aiSuggestion.routes';
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ]
@@ -34,6 +37,9 @@ app.use('/api', presenceRoutes)
 app.use('/api/facebook', facebookRoutes);
 app.use('/api/chat', chatRouter);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/customers', customerRoutes);
+app.use('/api/faq', faqRoutes);
+app.use('/api/ai', aiSuggestionRoutes);
 
 const PORT = Number(process.env.PORT ?? 4000);
 

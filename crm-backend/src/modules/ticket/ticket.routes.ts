@@ -6,6 +6,8 @@ import {
   createTicketHandler,
   updateTicketHandler,
   assignTicketHandler,
+  listTicketNotesHandler,
+  createTicketNoteHandler
 } from "./ticket.controller";
 import { authRequired } from "../../middleware/auth";
 
@@ -28,5 +30,9 @@ router.patch("/:id", authRequired, updateTicketHandler);
 
 // TRANSFER assignee – chỉ ADMIN
 router.patch("/:id/assign", authRequired, assignTicketHandler);
+
+router.get("/:id/notes", authRequired, listTicketNotesHandler);
+
+router.post("/:id/notes", authRequired, createTicketNoteHandler);
 
 export default router;

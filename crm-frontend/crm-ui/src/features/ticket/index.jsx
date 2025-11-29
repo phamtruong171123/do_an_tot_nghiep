@@ -1,57 +1,126 @@
+// src/features/ticket/index.jsx
 import React from "react";
-import { MOCK_TICKETS } from "./mock";
 import TicketLayout from "./TicketLayout";
 import TicketToolbar from "./TicketToolbar";
 import TicketList from "./TicketList";
 import TicketForm from "./TicketForm";
+import {
+  fetchTickets,
+  createTicketFromForm,
+  updateTicketFromForm,
+  fetchActiveUsers,
+} from "./api";
+import { useToast } from "../../components/Toast";
+
+const PAGE_SIZE = 20;
+
+function getCurrentUserFromStorage() {
+  try {
+    const raw = localStorage.getItem("me");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 export default function TicketPage() {
   const [statusFilter, setStatusFilter] = React.useState("ALL");
   const [mineOnly, setMineOnly] = React.useState(false);
   const [sortBy, setSortBy] = React.useState("DUE_DATE");
   const [searchText, setSearchText] = React.useState("");
-  const [items, setItems] = React.useState(MOCK_TICKETS);
+
+  const [items, setItems] = React.useState([]);
+  const [total, setTotal] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
 
   const [formOpen, setFormOpen] = React.useState(false);
   const [formMode, setFormMode] = React.useState("create"); // "create" | "edit"
   const [editingTicket, setEditingTicket] = React.useState(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
-  const currentAgentName = "Agent 1"; // tạm mock
+    const { pushToast } = useToast();
 
-  const filtered = React.useMemo(() => {
-    let items = [...MOCK_TICKETS];
 
-    if (statusFilter !== "ALL") {
-      items = items.filter((t) => t.status === statusFilter);
-    }
+  const [currentUser] = React.useState(() => getCurrentUserFromStorage());
+  const isAdmin = currentUser?.role === "ADMIN";
+  console.log("isAdmin: ", isAdmin);
 
-    if (mineOnly) {
-      items = items.filter((t) => t.assigneeName === currentAgentName);
-    }
+  const [assigneeOptions, setAssigneeOptions] = React.useState([]);
 
-    if (searchText.trim()) {
-      const q = searchText.trim().toLowerCase();
-      items = items.filter(
-        (t) =>
-          t.code.toLowerCase().includes(q) ||
-          t.subject.toLowerCase().includes(q) ||
-          (t.customerName || "").toLowerCase().includes(q)
-      );
-    }
+  // ====== Load list user cho ADMIN ======
+    React.useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const users = await fetchActiveUsers();
+        if (!cancelled) setAssigneeOptions(users);
+      } catch (e) {
+        console.error("Failed to fetch users for assign", e);
+        pushToast("Tải danh sách người dùng thất bại.", "error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
-    if (sortBy === "DUE_DATE") {
-      items.sort((a, b) => {
-        if (!a.dueAt && !b.dueAt) return 0;
-        if (!a.dueAt) return 1;
-        if (!b.dueAt) return -1;
-        return new Date(a.dueAt) - new Date(b.dueAt);
-      });
-    } else {
-      items.sort((a, b) => (a.code < b.code ? 1 : -1));
-    }
 
-    return items;
-  }, [statusFilter, mineOnly, sortBy, searchText]);
+  // ====== Load list ticket từ BE ======
+    const loadTickets = React.useCallback(
+    async ({ append = false, page: nextPage = 1 } = {}) => {
+      setLoading(true);
+      try {
+        const { items: fetched, total } = await fetchTickets({
+          status: statusFilter === "ALL" ? undefined : statusFilter,
+          mine: mineOnly,
+          q: searchText,
+          limit: PAGE_SIZE,
+          offset: (nextPage - 1) * PAGE_SIZE,
+        });
+
+        setTotal(total);
+        setHasMore(nextPage * PAGE_SIZE < total);
+        setPage(nextPage);
+
+        setItems((prev) =>
+          append ? [...prev, ...fetched] : fetched
+        );
+      } catch (err) {
+        console.error("Failed to fetch tickets", err);
+        pushToast("Tải danh sách ticket thất bại.", "error");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [statusFilter, mineOnly, searchText, pushToast]
+  );
+
+
+  React.useEffect(() => {
+    loadTickets({ append: false, page: 1 });
+  }, [loadTickets]);
+
+  // ====== Handlers cho toolbar ======
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
+  };
+
+  const handleMineChange = (checked) => {
+    setMineOnly(checked);
+  };
+
+  const handleSortByChange = (value) => {
+    setSortBy(value);
+  };
+
+  const handleSearchTextChange = (value) => {
+    setSearchText(value);
+  };
 
   const handleAddNew = () => {
     setFormMode("create");
@@ -61,51 +130,86 @@ export default function TicketPage() {
 
   const handleEditTicket = (ticket) => {
     setFormMode("edit");
-    setEditingTicket(ticket);
+    setEditingTicket({
+      id: ticket.id,
+      subject: ticket.subject,
+      customerName: ticket.customerName || "",
+      dueAt: ticket.dueAt || "",
+      status: ticket.status,
+      priority: ticket.priority,
+      assigneeName: ticket.assigneeName || "",
+      assigneeId: ticket.assigneeId ?? null,
+    });
     setFormOpen(true);
   };
 
-  const handleSubmitForm = (payload) => {
-    if (formMode === "create") {
-      const newTicket = {
-        id: String(Date.now()),
-        code: "TCK-" + Date.now(), // mock
-        ...payload,
-        isOverdue: false, // tạm
-      };
-      setItems((prev) => [newTicket, ...prev]);
-    } else if (editingTicket) {
-      setItems((prev) =>
-        prev.map((t) => (t.id === editingTicket.id ? { ...t, ...payload } : t))
-      );
-    }
-    setFormOpen(false);
+  const handleLoadMore = () => {
+    if (loading || !hasMore) return;
+    loadTickets({ append: true, page: page + 1 });
   };
 
-
-  
+  // ====== Submit form create / edit ======
+  const handleSubmitForm = async (formValues) => {
+    setSubmitting(true);
+    try {
+      if (formMode === "create") {
+        const newTicket = await createTicketFromForm(formValues);
+        setItems((prev) => [newTicket, ...prev]);
+        setTotal((prev) => prev + 1);
+        pushToast("Tạo ticket thành công.", "success");
+      } else if (formMode === "edit" && editingTicket) {
+        const updated = await updateTicketFromForm(
+          editingTicket.id,
+          formValues
+        );
+        setItems((prev) =>
+          prev.map((t) => (t.id === updated.id ? updated : t))
+        );
+        pushToast("Cập nhật ticket thành công.", "success");
+      }
+      setFormOpen(false);
+      setEditingTicket(null);
+      
+    } catch (err) {
+      if(err.message === "Cannot update a closed ticket"){
+        pushToast("Không thể cập nhật ticket đã đóng.", "error");
+      }
+      console.error("Failed to submit ticket form", err);
+      pushToast(
+        formMode === "create"
+          ? "Tạo ticket thất bại."
+          : "Cập nhật ticket thất bại.",
+        "error"
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <TicketLayout>
       <TicketToolbar
-        total={items.length}
+        total={total}
         status={statusFilter}
-        onStatusChange={setStatusFilter}
+        onStatusChange={handleStatusChange}
         mineOnly={mineOnly}
-        onMineChange={setMineOnly}
+        onMineChange={handleMineChange}
         sortBy={sortBy}
-        onSortByChange={setSortBy}
+        onSortByChange={handleSortByChange}
         searchText={searchText}
-        onSearchTextChange={setSearchText}
+        onSearchTextChange={handleSearchTextChange}
         onAddNew={handleAddNew}
-        
       />
 
-      <TicketList items={filtered} onEdit={handleEditTicket} />
+      <TicketList items={items} onEdit={handleEditTicket} />
 
       <TicketLayout.Footer>
-        <button className='btn-loadmore' type="button">
-          Load More
+        <button
+          type="button"
+          onClick={handleLoadMore}
+          disabled={loading || !hasMore}
+        >
+          {loading ? "Loading..." : hasMore ? "Load More" : "No more tickets"}
         </button>
       </TicketLayout.Footer>
 
@@ -113,8 +217,16 @@ export default function TicketPage() {
         open={formOpen}
         mode={formMode}
         initialValues={editingTicket}
-        onCancel={() => setFormOpen(false)}
+        onCancel={() => {
+          if (!submitting) {
+            setFormOpen(false);
+            setEditingTicket(null);
+          }
+        }}
         onSubmit={handleSubmitForm}
+        currentUser={currentUser}
+        isAdmin={isAdmin}
+        assigneeOptions={assigneeOptions}
       />
     </TicketLayout>
   );

@@ -138,7 +138,7 @@ function dismissToast(id) {
 
   function openCreate() {
     setEditingId(null);
-    setForm({ username: "", email: "", role: "AGENT", status: "ACTIVE" });
+    setForm({ username: "", email: "", role: "AGENT", status: "ACTIVE",fullName:"" });
     setFormErr("");
     setOpen(true);
   }
@@ -149,6 +149,7 @@ function dismissToast(id) {
       email: u.email || "",
       role: u.role || "AGENT",
       status: u.status || "ACTIVE",
+      fullName: u.fullName || "",
     });
     setFormErr("");
     setOpen(true);
@@ -325,8 +326,12 @@ function dismissToast(id) {
 
             
             <div className={cx("td", "wActions")}>
-              <button className={cx("link")} onClick={() => openEdit(u)}>Edit</button>
-              <button className={cx("link", "danger")} onClick={() => remove(u.id)}>Delete</button>
+              <button className={cx("link")} onClick={() => openEdit(u)}>
+                <i className="fa fa-edit" /> 
+              </button>
+              <button className={cx("link", "danger")} onClick={() => remove(u.id)}>
+                <i className="fa fa-trash" /> 
+              </button>
             </div>
           </div>
         ))}
@@ -363,6 +368,15 @@ function dismissToast(id) {
                   className={cx("input")}
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </label>
+              <label className={cx("field")}>
+                <span className={cx("label")}>FullName</span>
+                <input
+                  
+                  className={cx("input")}
+                  value={form.fullName}
+                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 />
               </label>
               <label className={cx("field")}>

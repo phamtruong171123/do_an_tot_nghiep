@@ -23,7 +23,7 @@ export async function fetchFacebookUserProfile( pageId: string,psid: string) {
     const data= await res.json();
   console.log("Fetched FB user profile data:", data);
   return {
-    name: `${data.last_name || ""} ${data.first_name || ""}`.trim() || "Facebook User",
+    name: `${data.last_name || ""} ${data.first_name || ""}`.trim() || `FB-${psid}`,
     avatarUrl: data.profile_pic || null,
   };
   } catch (error) {
@@ -71,7 +71,7 @@ export async function sendTextMessageViaGraph(
   const finalUrl = url.toString();
  
 
-  const r = await fetch(finalUrl, { method: "POST" }); // POST như sample
+  const r = await fetch(finalUrl, { method: "POST" }); // POST 
   const data: any = await r.json().catch(() => ({}));
 
   if (!r.ok) {

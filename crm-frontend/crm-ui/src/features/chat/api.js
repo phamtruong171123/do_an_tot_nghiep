@@ -24,13 +24,14 @@ export function normalizeThread(raw) {
       },
     ],
     updatedAt: raw.lastMessageAt,
+    lastMessageSentBy: raw.lastMessageSentBy || null,
     lastMessageSnippet: raw.lastMessageSnippet || "",
-    unread: raw.unread ?? 0,
+    unread: raw.unread ,
   };
 }
 
 // Chuẩn hóa 1 message từ backend 
-function normalizeMessage(m) {
+export function normalizeMessage(m) {
   const dir = String(m.direction || "").toUpperCase();
 
   return {
@@ -39,6 +40,8 @@ function normalizeMessage(m) {
     html: null,
     attachments: [],             // hiện tại backend chưa có
     sentAt: m.createdAt,         // MessageBubble dùng msg.sentAt
+    sentBy: m.sentBy,
+    
     status: m.status || "",
     isMine: dir === "OUT",       // OUT = tin của Agent
   };
@@ -77,4 +80,11 @@ export async function sendMessage(conversationId, text) {
 // Patch /api/chat/conversations/:id/read
 export async function markConversationRead(conversationId) {
   return apiPatch(`/api/chat/conversations/${conversationId}/read`, {});
+}
+
+// lấy unreadConversationCount 
+export async function fetchUnreadCount() {
+  const data = await apiGet("/api/chat/conversations/unread-count");
+
+  return data.total ?? 0;
 }

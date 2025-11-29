@@ -4,6 +4,8 @@ import classNames from "classnames/bind";
 import styles from "./TicketList.module.scss";
 import TicketListItem from "./TicketListItem";
 
+
+
 const cx = classNames.bind(styles);
 
 export default function TicketList({ items , onEdit}) {
@@ -23,6 +25,8 @@ export default function TicketList({ items , onEdit}) {
             <th className={cx("colStatus")}>Status</th>
             <th className={cx("colPriority")}>Priority</th>
             <th className={cx("colEdit")}>Edit</th>
+            <th className={cx("colNotes")}>Notes</th>
+        
           </tr>
         </thead>
         <tbody>

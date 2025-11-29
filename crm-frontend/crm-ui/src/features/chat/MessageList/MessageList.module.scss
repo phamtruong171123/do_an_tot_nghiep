@@ -34,3 +34,18 @@
 
 .selected.theirs .bubble { outline: 2px solid #3b82f6; }
 .selected.mine .bubble   { box-shadow: 0 0 0 2px #1d4ed8 inset; }
+
+/* Bubble do BOT gửi – có viền nổi nhẹ để phân biệt với Agent */
+.bot .bubble {
+  box-shadow: 0 0 0 1px rgba(187, 144, 27, 0.6); 
+  background: #b9ca21;
+}
+
+/* Tag nhỏ “Bot” trong phần meta */
+.senderTag {
+  margin-right: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+ color: #b90733
+}

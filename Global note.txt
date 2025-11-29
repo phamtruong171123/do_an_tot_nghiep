@@ -1,3 +1,4 @@
+khởi động be: docker(redis) + mysql +ngrok
 Websocket :Khi khách nhắn trên Facebook, webhook nhận sự kiện → backend lưu message + cập nhật hội thoại (lastMessage, unreadCount) → backend dùng WebSocket (socket.io) bắn sự kiện message:new cho tất cả màn hình chat đang mở → frontend nhận sự kiện, tự cập nhật ThreadList (đưa lên đầu, tăng unread) và MessageList (nếu đang mở đúng cuộc hội thoại) mà không cần refresh.
 vấn đề : hiện tại đang emit cho tất cả user và chỉ lọc với conversation
 
