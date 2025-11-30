@@ -1,14 +1,27 @@
+/* ChatLayout.module.scss */
+
 .chatLayout {
   display: grid;
   grid-template-columns: 320px 1fr;
-  height: 100vh;     /* hoặc 100% nếu parent đã set height */
-  min-height: 0;     /* quan trọng để con có thể scroll */
+  height: 100%;      /* ăn theo .content ở layout */
+  min-height: 0;
 }
 
-.sidebar { border-right: 1px solid #eee; overflow: auto; }
+/* Thread list luôn chiếm full height, scroll riêng */
+.sidebar {
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  min-height: 0;
+}
 
+/* Khu vực chat detail: header + messages + composer */
 .content {
   display: flex;
   flex-direction: column;
-  min-height: 0;     /* để MessageList nhận scroll */
+  min-height: 0;     /* để MessageList lấy flex: 1 */
+}
+
+.chatPageRoot {
+  height: 100%;         /* khớp với .content trong layout */
+  min-height: 0;
 }

@@ -333,11 +333,42 @@
   }
 }
 
-
 .faq-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  padding: 16px 20px 24px;
+  box-sizing: border-box;
+}
+
+.faq-card {
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 20px;
+}
+
+/* block chứa header + toolbar -> sticky trên */
+.faq-header-block {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: #ffffff;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* vùng list cuộn */
+.faq-list-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .faq-header {

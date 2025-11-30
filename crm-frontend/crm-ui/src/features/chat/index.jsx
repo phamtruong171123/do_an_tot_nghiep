@@ -1,6 +1,6 @@
 import React from "react";
 import ChatLayout from "./ChatLayout";
-
+import styles from "./ChatLayout/ChatLayout.module.scss";
 import ThreadList from "./ThreadList";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
@@ -11,6 +11,9 @@ import { ChatUnreadContext } from "../../contexts/ChatUnReadContext";
 import  {HeaderSearchContext}  from "../../contexts/HeaderSearchContext";
 import { fetchThreads, fetchMessages, sendMessage, markConversationRead ,normalizeMessage} from "./api";
 import { getChatSocket } from "./socket";
+
+
+
 
 export default function Chat() {
 
@@ -222,36 +225,38 @@ React.useEffect(() => {
 
 
   return (
-    <ChatLayout
-      sidebar={
-        loadingThreads ? (
-          <div style={{ padding: 16 }}>Đang tải hội thoại…</div>
-        ) : (
-          <ThreadList
-            items={filteredThreads}
-            activeId={activeThreadId}
-            onSelect={handleSelectThread}
-          />
-        )
-      }
-      content={
-        activeThread ? (
-          <>
-            <ChatHeader thread={activeThread} />
-            {loadingMessages ? (
-              <div style={{ padding: 16 }}>Đang tải tin nhắn…</div>
-            ) : (
-              <MessageList items={messages} />
-            )}
-            <Composer onSend={handleSend} />
-          </>
-        ) : (
-          <EmptyState
-            title="Select a conversation"
-            subtitle="Choose a chat to start messaging"
-          />
-        )
-      }
-    />
+    <div className={styles.chatPageRoot}>
+      <ChatLayout
+        sidebar={
+          loadingThreads ? (
+            <div style={{ padding: 16 }}>Đang tải hội thoại…</div>
+          ) : (
+            <ThreadList
+              items={filteredThreads}
+              activeId={activeThreadId}
+              onSelect={handleSelectThread}
+            />
+          )
+        }
+        content={
+          activeThread ? (
+            <>
+              <ChatHeader thread={activeThread} />
+              {loadingMessages ? (
+                <div style={{ padding: 16 }}>Đang tải tin nhắn…</div>
+              ) : (
+                <MessageList items={messages} />
+              )}
+              <Composer onSend={handleSend} />
+            </>
+          ) : (
+            <EmptyState
+              title="Select a conversation"
+              subtitle="Choose a chat to start messaging"
+            />
+          )
+        }
+      />
+    </div>
   );
 }

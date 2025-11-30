@@ -12,11 +12,18 @@ import TicketPage from "../features/ticket";
 import CustomerPage from "../features/customer/CustomerPage";
 import CustomerDetailPage from "../features/customer/CustomerDetailPage";
 import FaqPage from "../features/faq/FaqPage";
+
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
   catch { return null; }
 }
 
+function getDefaultPath(me) {
+  if (!me) return "/login";
+  return me.role === "ADMIN"
+    ? "/app/admin/dashboard"
+    : "/app/agent/chat"; // hoặc dashboard
+}
 
 function RequireAuthOutlet() {
   const me = getMe();
@@ -31,7 +38,9 @@ export default function AppRoutes() {
     <Routes>
       {/* Trang login */}
       <Route path="/login" element={<Login />} />
-      <Route path="/users" element={<UserManagement />} />
+
+     
+
       {/* Trang gốc: theo role */}
       <Route
         path="/"
@@ -39,7 +48,7 @@ export default function AppRoutes() {
           me
             ? (me.role === "ADMIN"
                 ? <Navigate to="/app/admin/dashboard" replace />
-                : <Navigate to="/app/agent/dashboard" replace />)
+                : <Navigate to="/app/agent/chat" replace />)
             : <Navigate to="/login" replace />
         }
       />
@@ -47,34 +56,60 @@ export default function AppRoutes() {
       {/* Khu vực cần đăng nhập */}
       <Route element={<RequireAuthOutlet />}>
         {/* Trang đổi mật khẩu dùng chung */}
-        <Route path="/app/account/change-password" element={<ChangePassword />} />
+        <Route
+          path="/app/account/change-password"
+          element={<ChangePassword />}
+        />
 
-        {/* ADMIN */}
-        <Route path="/app/admin" element={<AdminLayout me={me} />}>
+        {/* ADMIN  */}
+        <Route
+          path="/app/admin"
+          element={
+            me && me.role === "ADMIN"
+              ? <AdminLayout me={me} />
+              : <Navigate to={getDefaultPath(me)} replace />
+          }
+        >
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Placeholder title="Admin Dashboard" />} />
-          <Route path="chat"      element={<Chat/>} />
-          <Route path="users"     element={<UserManagement />} />
-          <Route path="tickets"     element={<TicketPage/>} />
-          <Route path="contacts"  element={<CustomerPage/>} />
+          <Route
+            path="dashboard"
+            element={<Placeholder title="Admin Dashboard" />}
+          />
+          <Route path="chat"      element={<Chat />} />
+          <Route path="tickets"   element={<TicketPage />} />
+          <Route path="contacts"  element={<CustomerPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
-          <Route path="faq" element={<FaqPage currentUser={me} />} />
-          
+          <Route path="faq"       element={<FaqPage currentUser={me} />} />
+
+          {/* User management chỉ nằm trong admin, không có /users tự do nữa */}
+          <Route path="users"     element={<UserManagement />} />
         </Route>
 
-        {/* AGENT */}
-        <Route path="/app/agent" element={<AgentLayout me={me} />}>
+        {/*  AGENT  */}
+        <Route
+          path="/app/agent"
+          element={
+            me && me.role !== "ADMIN"  
+              ? <AgentLayout me={me} />
+              : <Navigate to={getDefaultPath(me)} replace />
+          }
+        >
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<Placeholder title="Agent Dashboard" />} />
-          <Route path="chat"      element={<Chat/>} />
-          <Route path="tickets"     element={<TicketPage/>} />
-          <Route path="contacts"  element={<CustomerPage/>} />
+          <Route
+            path="dashboard"
+            element={<Placeholder title="Agent Dashboard" />}
+          />
+          <Route path="chat"      element={<Chat />} />
+          <Route path="tickets"   element={<TicketPage />} />
+          <Route path="contacts"  element={<CustomerPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
-           <Route path="faq" element={<FaqPage currentUser={me} />} />
+
+          
+          <Route path="faq" element={<FaqPage currentUser={me} />} />
         </Route>
       </Route>
 
-      {/* Bắt mọi thứ còn lại */}
+      
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

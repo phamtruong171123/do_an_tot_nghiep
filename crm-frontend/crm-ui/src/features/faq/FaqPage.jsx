@@ -98,31 +98,39 @@ export default function FaqPage({ currentUser }) {
 
   return (
     <div className={cx("faq-page")}>
-      <header className={cx("faq-header")}>
-        <h1 className={cx("faq-title")}>FAQ</h1>
-        <p className={cx("faq-subtitle")}>
-          Can&apos;t find the answer you&apos;re looking for?{" "}
-          <span className={cx("faq-subtitle-highlight")}>
-            Contact your admin or support team for extra assistance.
-          </span>
-        </p>
-      </header>
+      <div className={cx("faq-card")}>
+        {/* Header + toolbar: cố định, phía trên */}
+        <div className={cx("faq-header-block")}>
+          <header className={cx("faq-header")}>
+            <h1 className={cx("faq-title")}>FAQ</h1>
+            <p className={cx("faq-subtitle")}>
+              Can&apos;t find the answer you&apos;re looking for?{" "}
+              <span className={cx("faq-subtitle-highlight")}>
+                Contact your admin or support team for extra assistance.
+              </span>
+            </p>
+          </header>
 
-      <FaqToolbar
-        searchText={searchText}
-        onSearchChange={setSearchText}
-        onAdd={handleAddClick}
-        canCreate={isAdmin}
-      />
+          <FaqToolbar
+            searchText={searchText}
+            onSearchChange={setSearchText}
+            onAdd={handleAddClick}
+            canCreate={isAdmin}
+          />
+        </div>
 
-      <FaqList
-        items={filteredFaqs}
-        loading={loading}
-        error={error}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        canEdit={isAdmin}
-      />
+        
+        <div className={cx("faq-list-wrap")}>
+          <FaqList
+            items={filteredFaqs}
+            loading={loading}
+            error={error}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            canEdit={isAdmin}
+          />
+        </div>
+      </div>
 
       <FaqFormModal
         visible={modalVisible}

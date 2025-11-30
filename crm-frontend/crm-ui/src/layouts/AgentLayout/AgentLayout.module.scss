@@ -1,34 +1,38 @@
-.layout { 
-    display:flex;
-     min-height:100vh;
-    background:#f7f9fc; 
+
+
+.layout {
+  display: flex;
+  height: 100vh;        /* dùng height, không dùng min-height */
+  overflow: hidden;     /* KHÔNG cho trang cuộn ở đây */
+  background: #f7f9fc;
 }
-.main { flex:1; display:flex; flex-direction:column; }
-.content { padding:16px; }
+
 .sidebar-wrap {
-  width: 240px;          
+  width: 240px;
   flex-shrink: 0;
 
-  position: sticky;
-  top: 0;
-  align-self: flex-start; 
+  height: 100%;         /* sidebar luôn full chiều cao khung */
+  overflow-y: auto;     /* nếu menu dài thì sidebar tự cuộn */
+  border-right: 1px solid #e5e7eb;
+}
 
-  height: 100vh;
-  overflow-y: auto;      
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;        /* cho phép con flex và cuộn */
 }
 
 .header-wrap {
-  position: sticky;
-  top: 0;
-  z-index: 10;
- 
+  flex-shrink: 0;
   background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
 }
-
 
 .content {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  padding: 16px 24px 24px; 
+  overflow: hidden;     /* QUAN TRỌNG: không cuộn ở đây nữa */
+  padding: 0;           /* để page (Chat, FAQ...) tự lo padding */
 }

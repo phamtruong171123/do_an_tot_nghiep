@@ -157,3 +157,8 @@ Update trạng thái: OPEN → PENDING → CLOSED.
 Ghi chú nội bộ.
 
 Khi cần trả lời khách → quay lại Chat.
+
+
+
+đã có chống lách luật ở router
+ô chat: unreadcountConversation theo assignee id
