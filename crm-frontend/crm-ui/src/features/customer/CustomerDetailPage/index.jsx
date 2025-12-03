@@ -6,7 +6,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import CustomerDetailHeader from "./CustomerDetailHeader";
 import CustomerInfoForm from "./CustomerInfoForm";
 import CustomerSummaryPanel from "./CustomerSummaryPanel";
-import CustomerTicketsPanel from "./CustomerTicektPanel";
+import CustomerRecentDeals from './CustomerRecentDeals';
 
 import { fetchCustomerDetail, updateCustomer } from "../api";
 import { useToast } from "../../../components/Toast";
@@ -106,11 +106,7 @@ export default function CustomerDetailPage() {
     }
   };
 
-  const handleClickTicket = (ticket) => {
-    if (!ticket || !ticket.id) return;
-    // tuỳ route ticket của bạn
-    navigate(`/tickets/${ticket.id}`);
-  };
+
 
   if (loading && !customer) {
     return <div className={cx("page")}>Đang tải khách hàng…</div>;
@@ -141,11 +137,11 @@ export default function CustomerDetailPage() {
           onChangeSegment={handleSegmentChange}
           onChangeNote={handleNoteChange}
         />
-
-        <CustomerTicketsPanel
-          tickets={tickets}
-          onClickTicket={handleClickTicket}
-        />
+        <div className="customer-detail-right-column">
+  {/* ...các card khác như TicketPanel... */}
+  <CustomerRecentDeals customerId={customer.id} />
+</div>
+        
       </div>
     </div>
   );

@@ -47,6 +47,9 @@ model User {
   assignedConversations Conversation[] @relation("ConversationAssignee")
   // Các note trên ticket do user này tạo
   ticketNotes           TicketNote[]   @relation("TicketNoteAuthor")
+
+  dealsOwned     Deal[]         @relation("DealOwner")
+  dealActivities DealActivity[] @relation("DealActivityAuthor")
 }
 
 model AgentProfile {
@@ -97,6 +100,7 @@ model Customer {
   conversation Conversation?
   // 0..n ticket
   tickets      Ticket[]
+  deals        Deal[]
 
   @@unique([externalId])
 }
@@ -248,4 +252,57 @@ model Faq {
 
   @@index([isActive])
   @@index([language])
+}
+
+enum DealStage {
+  POTENTIAL // Tiềm năng
+  CONTACTED // Đã liên hệ
+  NEGOTIATION // Thương thảo
+  CONTRACT // Ký hợp đồng thành công
+  LOST // Thất bại
+}
+
+model Deal {
+  id          String  @id @default(cuid())
+  code        String  @unique // ví dụ: DE-2025-0001
+  title       String
+  description String?
+
+  stage    DealStage @default(POTENTIAL)
+  amount   Float?
+  currency String?
+
+  appointmentAt DateTime? // ngày hẹn gặp / chốt
+  closedAt      DateTime?
+
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  ownerId Int?
+  owner   User? @relation("DealOwner", fields: [ownerId], references: [id])
+
+  activities DealActivity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([ownerId])
+  @@index([stage])
+}
+
+model DealActivity {
+  id         String   @id @default(cuid())
+  dealId     String
+  authorId   Int
+  content    String   @db.Text
+  activityAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  deal   Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  author User @relation("DealActivityAuthor", fields: [authorId], references: [id])
+
+  @@index([dealId])
+  @@index([authorId])
+  @@index([activityAt])
 }

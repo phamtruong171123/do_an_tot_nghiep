@@ -12,6 +12,9 @@ import TicketPage from "../features/ticket";
 import CustomerPage from "../features/customer/CustomerPage";
 import CustomerDetailPage from "../features/customer/CustomerDetailPage";
 import FaqPage from "../features/faq/FaqPage";
+import DealPage from '../features/deal/DealPage';
+import DealDetailPage from '../features/deal/DealDetailPage';
+
 
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
@@ -78,7 +81,10 @@ export default function AppRoutes() {
           <Route path="chat"      element={<Chat />} />
           <Route path="tickets"   element={<TicketPage />} />
           <Route path="contacts"  element={<CustomerPage />} />
+          <Route path="deals" element={<DealPage />} />
+<Route path="deals/:id" element={<DealDetailPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
+          
           <Route path="faq"       element={<FaqPage currentUser={me} />} />
 
           {/* User management chỉ nằm trong admin, không có /users tự do nữa */}
@@ -103,7 +109,8 @@ export default function AppRoutes() {
           <Route path="tickets"   element={<TicketPage />} />
           <Route path="contacts"  element={<CustomerPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
-
+          <Route path="deals" element={<DealPage />} />
+<Route path="deals/:id" element={<DealDetailPage />} />
           
           <Route path="faq" element={<FaqPage currentUser={me} />} />
         </Route>

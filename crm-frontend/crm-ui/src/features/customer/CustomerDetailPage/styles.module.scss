@@ -1,0 +1,106 @@
+.card {
+  margin-top: 12px;
+}
+
+.header {
+  padding: 10px 16px 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.body {
+  padding: 8px 16px 12px;
+}
+
+.empty {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.item:hover {
+  background: #eef2ff;
+}
+
+.itemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.itemAmount {
+  font-size: 12px;
+  font-weight: 500;
+  color: #111827;
+}
+
+.itemBottom {
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.date {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.pill {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.pill_potential {
+  background: #e3f2ff;
+  color: #1a73e8;
+}
+
+.pill_contacted {
+  background: #e6f4ea;
+  color: #1e8e3e;
+}
+
+.pill_negotiation {
+  background: #fff4e5;
+  color: #f57c00;
+}
+
+.pill_contract {
+  background: #e0f2f1;
+  color: #00897b;
+}
+
+.pill_lost {
+  background: #ffebee;
+  color: #c62828;
+}

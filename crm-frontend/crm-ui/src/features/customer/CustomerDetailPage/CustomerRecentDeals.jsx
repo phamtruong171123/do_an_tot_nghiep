@@ -1,52 +1,84 @@
 import React from "react";
-import classNames from "classnames/bind";
-import styles from "./CustomerDetailPage.module.scss";
+import styles from "./styles.module.scss";
+import { fetchRecentDealsForCustomer } from "../../deal/api";
 
-const cx = classNames.bind(styles);
+function formatDate(value) {
+  if (!value) return "-";
+  const d = new Date(value);
+  return d.toLocaleDateString();
+}
 
-export default function CustomerRecentDeals({ deals, onClickDeal, onAddDeal }) {
+export default function CustomerRecentDeals({ customerId }) {
+  const [items, setItems] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!customerId) return;
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const deals = await fetchRecentDealsForCustomer(customerId, 5);
+        if (!cancelled) setItems(deals);
+      } catch (e) {
+        console.error("Failed to load recent deals", e);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [customerId]);
+
   return (
-    <div className={cx("recentDeals")}>
-      <div className={cx("recentHeader")}>
-        <h2 className={cx("recentTitle")}>Recent Deals</h2>
-        <button
-          type="button"
-          className={cx("recentAddBtn")}
-          onClick={onAddDeal}
-        >
-          +
-        </button>
+    <div className={`card ${styles.card}`}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Recent Deals</h3>
       </div>
-
-      <div className={cx("recentList")}>
-        {deals.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            className={cx("dealItem")}
-            onClick={() => onClickDeal?.(d)}
-          >
-            <div className={cx("dealAvatar")}>
-              {d.avatarUrl ? (
-                <img src={d.avatarUrl} alt={d.title} />
-              ) : (
-                <span />
-              )}
-            </div>
-            <div className={cx("dealInfo")}>
-              <div className={cx("dealTitle")}>{d.title}</div>
-              <div className={cx("dealMeta")}>
-                <span>{d.dateLabel}</span>
-                <span>{d.amount}</span>
-              </div>
-            </div>
-          </button>
-        ))}
+      <div className={styles.body}>
+        {loading ? (
+          <div className={styles.empty}>Loading...</div>
+        ) : items.length === 0 ? (
+          <div className={styles.empty}>No deals found.</div>
+        ) : (
+          <ul className={styles.list}>
+            {items.map((d) => (
+              <li
+                key={d.id}
+                className={styles.item}
+                onClick={() =>
+                  window.open(`/app/admin/deals/${d.id}`, "_self")
+                }
+              >
+                <div className={styles.itemTop}>
+                  <span className={styles.itemTitle}>{d.title}</span>
+                  {d.amount != null && (
+                    <span className={styles.itemAmount}>
+                      {d.amount.toLocaleString("vi-VN")}
+                    </span>
+                  )}
+                </div>
+                <div className={styles.itemBottom}>
+                  <span
+                    className={`${styles.pill} ${
+                      styles["pill_" + d.stage.toLowerCase()]
+                    }`}
+                  >
+                    {d.stage}
+                  </span>
+                  <span className={styles.date}>
+                    {formatDate(d.appointmentAt || d.createdAt)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-
-      <button type="button" className={cx("recentLoadMore")}>
-        Load More
-      </button>
     </div>
   );
 }

@@ -10,6 +10,10 @@ import ticketRoutes from './modules/ticket/ticket.routes';
 import customerRoutes from './modules/customer/customer.routes';
 import faqRoutes from './modules/faq/faq.routes';
 import aiSuggestionRoutes from './modules/ai/aiSuggestion.routes';
+import dealRoutes from './modules/deal/deal.routes';
+
+import { getRecentDealsOfCustomer } from './modules/deal/deal.controller';
+
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
 ]
@@ -30,6 +34,7 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
+app.get('/api/customers/:customerId/recent-deals', getRecentDealsOfCustomer);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -40,6 +45,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/faq', faqRoutes);
 app.use('/api/ai', aiSuggestionRoutes);
+app.use('/api/deals', dealRoutes);
 
 const PORT = Number(process.env.PORT ?? 4000);
 
