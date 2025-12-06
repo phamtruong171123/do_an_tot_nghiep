@@ -117,3 +117,60 @@ export async function markConversationRead(req: Request, res: Response) {
     unread: conv.unreadCount,
   });
 }
+
+
+export async function getConversationCustomerHandler(req: Request, res: Response) {
+  const { conversationId } = req.params;
+
+  // 1. Lấy conversation kèm customer
+  const conv = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: {
+      customer: true,
+    },
+  });
+
+  if (!conv) {
+    return res.status(404).json({ message: "Conversation not found" });
+  }
+
+  if (!conv.customer || !conv.customerId) {
+    return res.status(404).json({ message: "Customer not found for this conversation" });
+  }
+
+  const customer = conv.customer;
+
+  // 2. Tìm deal mới nhất của customer (nếu có)
+  const latestDeal = await prisma.deal.findFirst({
+    where: { customerId: conv.customerId },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return res.json({
+    customer: {
+      id: customer.id,
+      externalId: customer.externalId,
+      name: customer.name,
+      avatarUrl: customer.avatarUrl,
+      phoneNumber: customer.phoneNumber,
+      email: customer.email,
+      address: customer.address,
+      segment: customer.segment,
+      note: customer.note,
+    },
+    latestDealId: latestDeal?.id ?? null,
+    latestDeal: latestDeal
+      ? {
+          id: latestDeal.id,
+          code: latestDeal.code,
+          title: latestDeal.title,
+          stage: latestDeal.stage,
+          amount: latestDeal.amount,
+          appointmentAt: latestDeal.appointmentAt,
+          closedAt: latestDeal.closedAt,
+        }
+      : null,
+  });
+}

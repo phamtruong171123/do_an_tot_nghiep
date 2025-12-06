@@ -3,6 +3,7 @@ import {
   listConversationsHandler,
   listMessagesHandler,
   postMessageHandler,
+  getConversationCustomerHandler,
   assignConversationHandler,markConversationRead
 } from "./chat.controller";
 import {getUnreadConversationCountForUser} from "./chat.service";
@@ -41,4 +42,11 @@ router.get(
     }
   }
 );
+
+router.get(
+  "/conversations/:conversationId/customer",
+  authRequired,
+  getConversationCustomerHandler
+);
+
 export default router;

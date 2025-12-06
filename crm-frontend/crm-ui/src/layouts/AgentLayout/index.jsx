@@ -27,7 +27,7 @@ export default function AgentLayout({me}) {
         { to: "/app/agent/deals",     label: "Deals",     iconClass: "fa-brands fa-ideal" },
     { to: "/app/agent/tickets",     label: "Tickets",     iconClass: "fa-solid fa-list-check" },
     { to: "/app/agent/contacts",  label: "Contacts",  iconClass: "fa-solid fa-address-book" },
-    { to: "/app/agent/faq", label: "FAQ", iconClass: "fa-regular fa-circle-question" },
+ 
 
   ];
 

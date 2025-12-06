@@ -1,17 +1,30 @@
 import { Request, Response } from 'express';
 import * as dealService from './deal.service';
+import { updateDealWithActivity } from './deal.service';
 
 export async function getDeals(req: Request, res: Response) {
-  const { customerId, page, pageSize } = req.query;
+  const { customerId, page, pageSize, search, sortBy, sortOrder } = req.query;
 
   const data = await dealService.listDeals({
-    customerId: customerId ? Number(customerId) : undefined,  // 👈 convert sang number
+    customerId: customerId ? Number(customerId) : undefined,
     page: page ? Number(page) : undefined,
     pageSize: pageSize ? Number(pageSize) : undefined,
+    search: typeof search === 'string' ? search.trim() : undefined,
+    sortBy:
+      sortBy === 'amount' ||
+      sortBy === 'appointmentAt' ||
+      sortBy === 'createdAt'
+        ? sortBy
+        : undefined,
+    sortOrder:
+      sortOrder === 'asc' || sortOrder === 'desc'
+        ? sortOrder
+        : undefined,
   });
 
   res.json(data);
 }
+
 
 export async function getDealById(req: Request, res: Response) {
   const { id } = req.params;
@@ -46,23 +59,7 @@ export async function postDeal(req: Request, res: Response) {
   res.status(201).json(deal);
 }
 
-export async function patchDeal(req: Request, res: Response) {
-  const { id } = req.params;
-  const data = req.body;
 
-  const updated = await dealService.updateDeal(id, {
-    ...data,
-    amount: data.amount != null ? Number(data.amount) : undefined,
-    appointmentAt: data.appointmentAt
-      ? new Date(data.appointmentAt)
-      : undefined,
-    closedAt: data.closedAt ? new Date(data.closedAt) : undefined,
-    ownerId:
-      data.ownerId != null ? Number(data.ownerId) : undefined,
-  });
-
-  res.json(updated);
-}
 
 export async function postDealActivity(req: Request, res: Response) {
   const userId = (req as any).user?.id as number | undefined;
@@ -108,3 +105,17 @@ export async function getRecentDealsOfCustomer(req: Request, res: Response) {
   );
   res.json(items);
 }
+
+export async function patchDeal(req: Request, res: Response) {
+  const { id } = req.params;
+  const userId = (req as any).user.id as number ;
+
+  try {
+    const updated = await updateDealWithActivity(id, req.body, userId);
+    return res.json(updated);
+  } catch (e: any) {
+    console.error(e);
+    return res.status(400).json({ error: e.message || "Failed to update deal" });
+  }
+}
+

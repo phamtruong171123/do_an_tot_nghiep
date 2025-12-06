@@ -1,8 +1,10 @@
 import React from "react";
 import styles from "./ChatHeader.module.scss";
 import defaultAvatar from "../../../assets/images/default-avatar.png";
+import ChatMoreActions from "../ChatMoreAction";
 
 export default function ChatHeader({ thread }) {
+ 
   const p = thread.participants && thread.participants[0];
   const avatar = p?.avatarUrl || thread.iconUrl || defaultAvatar;
   return (
@@ -14,9 +16,8 @@ export default function ChatHeader({ thread }) {
           <div className={styles.status}><span className={styles.dot} /> Online</div>
         </div>
       </div>
-      <div className={styles.right}>
-        
-        <button className={styles.btn}><i class="fa-solid fa-ellipsis-vertical"></i></button>
+    <div className={styles.right}>
+        <ChatMoreActions conversationId={thread.id} />
       </div>
     </header>
   );

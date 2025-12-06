@@ -6,8 +6,11 @@ import CreateCustomerForm from "../CreateCustomerForm";
 import CustomerToolbar from "../CustomerToolbar";
 import CustomerTable from "../CustomerTable";
 
+
 import { fetchCustomers } from "../api";
 import { useToast } from "../../../components/Toast";
+import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import PageLayout from "../../../components/PageLayout";
 const PAGE_SIZE = 20;
 
 const cx = classNames.bind(styles);
@@ -31,7 +34,10 @@ const { pushToast } = useToast?.() || { pushToast: () => {} };
     sortBy: "NAME_ASC",   // NAME_ASC | NAME_DESC | CREATED_AT
   });
 
-   // Load từ BE mỗi khi page / filter đổi
+  const debouncedSearch = useDebouncedValue(filters.q, 400);
+
+
+
   React.useEffect(() => {
     let cancelled = false;
 
@@ -42,7 +48,7 @@ const { pushToast } = useToast?.() || { pushToast: () => {} };
           await fetchCustomers({
             page,
             limit: PAGE_SIZE,
-            q: filters.q,
+            q: debouncedSearch,
             segment: filters.segment,
             sortBy: filters.sortBy,
           });
@@ -70,14 +76,14 @@ const { pushToast } = useToast?.() || { pushToast: () => {} };
     return () => {
       cancelled = true;
     };
-  }, [page, filters.q, filters.segment, filters.sortBy]);
+  }, [page, debouncedSearch, filters.segment, filters.sortBy]);
 
 
  
   const handleCustomerCreated = (customer) => {
   setIsCreateOpen(false);
 
-  // Cách đơn giản: reload lại list về page 1
+
   setPage(1);
   setCustomers([]);
   setHasMore(true);
@@ -153,35 +159,37 @@ const { pushToast } = useToast?.() || { pushToast: () => {} };
   };
 
   return (
-    <div className={cx("page")}>
-      <CustomerToolbar
-        total={total}
-        filters={filters} 
-        onAddNew={handleAddNew}
-        
-        onChangeFilters={handleChangeFilters}
-      />
-
-      <CustomerTable
-        items={filteredCustomers}
-        onEdit={handleEditCustomer}
-        onRowClick={handleRowClick}
-      />
-
-      <div className={cx("loadMoreWrapper")}>
-        <button
-          type="button"
-          className={cx("loadMoreBtn")}
-          onClick={handleLoadMore}
-        >
-          Load More
-        </button>
+    <PageLayout>
+      <div className={cx("page")}>
+        <CustomerToolbar
+          total={total}
+          filters={filters} 
+          onAddNew={handleAddNew}
+          
+          onChangeFilters={handleChangeFilters}
+        />
+  
+        <CustomerTable
+          items={filteredCustomers}
+          onEdit={handleEditCustomer}
+          onRowClick={handleRowClick}
+        />
+  
+        <div className={cx("loadMoreWrapper")}>
+          <button
+            type="button"
+            className={cx("loadMoreBtn")}
+            onClick={handleLoadMore}
+          >
+            Load More
+          </button>
+        </div>
+        <CreateCustomerForm
+    open={isCreateOpen}
+    onClose={() => setIsCreateOpen(false)}
+    onCreated={handleCustomerCreated}
+  />
       </div>
-      <CreateCustomerForm
-  open={isCreateOpen}
-  onClose={() => setIsCreateOpen(false)}
-  onCreated={handleCustomerCreated}
-/>
-    </div>
+    </PageLayout>
   );
 }

@@ -6,36 +6,48 @@ export function normalizeDealSummary(raw) {
     id: raw.id,
     code: raw.code,
     title: raw.title,
-    customerName: raw.customer?.name || "",
     stage: raw.stage,
-    amount:
-      typeof raw.amount === "number" ? raw.amount : null,
-    appointmentAt: raw.appointmentAt || null,
-    createdAt: raw.createdAt || null,
+    amount: raw.amount ?? null,
+    currency: raw.currency || "",
+    customerName: raw.customer?.name || "",
+    ownerName: raw.owner?.fullName || raw.owner?.username || "",
+    createdAt: raw.createdAt,
+    appointmentAt: raw.appointmentAt,
   };
 }
 
 // GET /api/deals?limit=&offset=&customerId=
 export async function fetchDeals({
+  page = 1,
+  pageSize = 20,
+  search,
+  sortBy,
+  sortOrder,
   customerId,
-  limit = 20,
-  offset = 0,
 } = {}) {
   const params = new URLSearchParams();
-  params.set("limit", String(limit));
-  params.set("offset", String(offset));
-  if (customerId !== undefined && customerId !== null) {
-    params.set("customerId", String(customerId));
-  }
 
-  const res = await apiGet(`/api/deals?${params.toString()}`);
-  const items = Array.isArray(res.items) ? res.items : [];
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
 
-  return {
-    items: items.map(normalizeDealSummary),
-    total: typeof res.total === "number" ? res.total : items.length,
+  if (customerId != null) params.set("customerId", String(customerId));
+  if (search) params.set("search", search);
+  if (sortBy) params.set("sortBy", sortBy);
+  if (sortOrder) params.set("sortOrder", sortOrder);
+
+  const url = `/api/deals?${params.toString()}`;
+
+
+  const res = await apiGet(url);
+ 
+ return {
+    
+    items: res.items.map(normalizeDealSummary),
+    total: res.items.length,
   };
 }
+
+
 
 // POST /api/deals
 export async function createDeal(form) {

@@ -1,0 +1,60 @@
+.page {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+
+.grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr;  
+  gap: 15px;                   
+}
+
+.card {
+  text-align: left;
+  border: none;
+  background: #e2d6d6;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.12s ease;
+  width: 100%;                 
+}
+
+.card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.cardDesc {
+  font-size: 13px;
+  color: #6b7280;
+}

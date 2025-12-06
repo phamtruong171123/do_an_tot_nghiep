@@ -88,3 +88,16 @@ export async function fetchUnreadCount() {
 
   return data.total ?? 0;
 }
+
+export async function fetchConversationCustomer(conversationId) {
+  const res = await apiGet(`/api/chat/conversations/${conversationId}/customer`);
+
+ 
+  const customer = res?.customer ?? res?.customerDto ?? res ?? null;
+  const latestDeal =
+    res?.latestDeal ?? res?.latestDealDto ?? null;
+  const latestDealId =
+    res?.latestDealId ?? latestDeal?.id ?? null;
+
+  return { customer, latestDeal, latestDealId };
+}

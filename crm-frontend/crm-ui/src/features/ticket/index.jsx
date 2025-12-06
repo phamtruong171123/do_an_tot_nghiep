@@ -1,4 +1,3 @@
-// src/features/ticket/index.jsx
 import React from "react";
 import TicketLayout from "./TicketLayout";
 import TicketToolbar from "./TicketToolbar";
@@ -11,6 +10,9 @@ import {
   fetchActiveUsers,
 } from "./api";
 import { useToast } from "../../components/Toast";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+
+
 
 const PAGE_SIZE = 20;
 
@@ -29,6 +31,7 @@ export default function TicketPage() {
   const [mineOnly, setMineOnly] = React.useState(false);
   const [sortBy, setSortBy] = React.useState("DUE_DATE");
   const [searchText, setSearchText] = React.useState("");
+  const debouncedSearchText = useDebouncedValue(searchText, 400);
 
   const [items, setItems] = React.useState([]);
   const [total, setTotal] = React.useState(0);
@@ -78,7 +81,7 @@ export default function TicketPage() {
         const { items: fetched, total } = await fetchTickets({
           status: statusFilter === "ALL" ? undefined : statusFilter,
           mine: mineOnly,
-          q: searchText,
+          q: debouncedSearchText,
           limit: PAGE_SIZE,
           offset: (nextPage - 1) * PAGE_SIZE,
         });
@@ -97,7 +100,7 @@ export default function TicketPage() {
         setLoading(false);
       }
     },
-    [statusFilter, mineOnly, searchText, pushToast]
+    [statusFilter, mineOnly, debouncedSearchText, pushToast]
   );
 
 

@@ -8,7 +8,7 @@
   position: sticky;    /* cố định khi scroll messages */
   top: 0;
   z-index: 10;
-  background: #fff;    /* tránh bị trong suốt */
+  background: #fff;  
 }
 .left { display:flex; gap:12px; align-items:center; }
 .avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; }

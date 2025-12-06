@@ -1,16 +1,19 @@
 .page {
-  padding: 16px;
+  padding: 16px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: calc(100vh - 72px); /* vùng content trừ phần header trên */
+  overflow-y: auto;           /* cuộn trong trang detail */
 }
 
 .loading {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  margin: 80px auto;
+  font-size: 16px;
+  color: #666;
 }
+
+/* Header */
 
 .header {
   display: flex;
@@ -29,115 +32,7 @@
   margin-top: 4px;
 }
 
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
-  gap: 16px;
-}
-
-.summaryCard {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  padding: 16px 20px;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 13px;
-}
-
-.row:last-child {
-  border-bottom: none;
-}
-
-.rowLabel {
-  color: #6b7280;
-}
-
-.rowValue {
-  font-weight: 500;
-}
-
-.rightCol {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.activityCard {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-  padding: 16px 20px;
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.textarea {
-  width: 100%;
-  min-height: 80px;
-  resize: vertical;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 8px 10px;
-  font-size: 13px;
-}
-
-.textarea:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08);
-}
-
-.activityActions {
-  margin-top: 8px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* activity list */
-
-.empty {
-  font-size: 13px;
-  color: #9ca3af;
-}
-
-.activityList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.activityItem {
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f9fafb;
-}
-
-.activityContent {
-  font-size: 13px;
-}
-
-.activityMeta {
-  margin-top: 4px;
-  font-size: 11px;
-  color: #9ca3af;
-}
-
-/* stage pill + primary btn reuse */
+/* Stage pill */
 
 .pill {
   display: inline-flex;
@@ -145,7 +40,7 @@
   border-radius: 999px;
   font-size: 11px;
   font-weight: 500;
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 .pill_potential {
@@ -173,6 +68,178 @@
   color: #c62828;
 }
 
+/* Layout 2 cột */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+  gap: 16px;
+}
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card chung */
+
+.card,
+.summaryCard,
+.activityCard {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+/* Summary */
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowLabel {
+  color: #6b7280;
+}
+
+.rowValue {
+  color: #111827;
+  font-weight: 500;
+}
+
+/* Section title */
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+/* Form */
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.formRow label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.formRow input,
+.formRow select,
+.formRow textarea {
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.formRow textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.formRow input:focus,
+.formRow select:focus,
+.formRow textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Customer card */
+
+.customerName {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Activity */
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  font-size: 13px;
+  resize: vertical;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.08);
+}
+
+.activityActions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Activity list */
+
+.empty {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.activityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.activityItem {
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.activityItem:last-child {
+  border-bottom: none;
+}
+
+.activityContent {
+  font-size: 13px;
+  color: #111827;
+}
+
+.activityMeta {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* Button */
+
 .primaryBtn {
   padding: 8px 16px;
   border-radius: 999px;
@@ -181,4 +248,17 @@
   border: none;
   font-size: 13px;
   cursor: pointer;
+}
+
+.primaryBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Responsive */
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

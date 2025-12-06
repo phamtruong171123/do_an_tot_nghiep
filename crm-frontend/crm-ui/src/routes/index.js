@@ -14,7 +14,7 @@ import CustomerDetailPage from "../features/customer/CustomerDetailPage";
 import FaqPage from "../features/faq/FaqPage";
 import DealPage from '../features/deal/DealPage';
 import DealDetailPage from '../features/deal/DealDetailPage';
-
+import SettingsPage from "../features/settings";
 
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
@@ -84,7 +84,7 @@ export default function AppRoutes() {
           <Route path="deals" element={<DealPage />} />
 <Route path="deals/:id" element={<DealDetailPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
-          
+          <Route path="settings" element={<SettingsPage me={me} />} />
           <Route path="faq"       element={<FaqPage currentUser={me} />} />
 
           {/* User management chỉ nằm trong admin, không có /users tự do nữa */}
@@ -110,8 +110,8 @@ export default function AppRoutes() {
           <Route path="contacts"  element={<CustomerPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="deals" element={<DealPage />} />
-<Route path="deals/:id" element={<DealDetailPage />} />
-          
+<Route path="settings" element={<SettingsPage me={me} />} />
+          <Route path="/app/agent/settings" element={<SettingsPage />} />
           <Route path="faq" element={<FaqPage currentUser={me} />} />
         </Route>
       </Route>

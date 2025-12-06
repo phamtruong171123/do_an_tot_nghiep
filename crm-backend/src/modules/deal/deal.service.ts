@@ -9,26 +9,74 @@ export async function listDeals(params: {
   customerId?: number;  
   page?: number;
   pageSize?: number;
+  search?: string;
+  sortBy?: 'createdAt' | 'amount' | 'appointmentAt';
+  sortOrder?: 'asc' | 'desc';
 }) {
-  const { customerId, page = 1, pageSize = 20 } = params;
+  const {
+    customerId,
+    page = 1,
+    pageSize = 20,
+    search,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+  } = params;
 
   const where: Prisma.DealWhereInput = {};
+
   if (typeof customerId === 'number') {
-    where.customerId = customerId;      
+    where.customerId = customerId;
+  }
+
+  // 🔍 search theo title + customer.name
+  if (search && search.trim() !== '') {
+    const q = search.trim();
+    where.OR = [
+      {
+        title: {
+          contains: q,
+  
+        },
+      },
+      {
+        customer: {
+          name: {
+            contains: q,
+       
+          },
+        },
+      },
+    ];
+  }
+
+  // 🔽 dynamic sort
+  let orderBy: Prisma.DealOrderByWithRelationInput;
+
+  switch (sortBy) {
+    case 'amount':
+      orderBy = { amount: sortOrder };
+      break;
+    case 'appointmentAt':
+      orderBy = { appointmentAt: sortOrder };
+      break;
+    case 'createdAt':
+    default:
+      orderBy = { createdAt: sortOrder };
+      break;
   }
 
   const [items, total] = await Promise.all([
     prisma.deal.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
         customer: {
-          select: { id: true, name: true }, 
+          select: { id: true, name: true },
         },
         owner: {
-          select: { id: true, fullName: true }, 
+          select: { id: true, fullName: true },
         },
       },
     }),
@@ -37,6 +85,7 @@ export async function listDeals(params: {
 
   return { items, total, page, pageSize };
 }
+
 
 /**
  * Lấy chi tiết 1 deal
@@ -174,4 +223,41 @@ export async function listRecentDealsForCustomer(
       createdAt: true,
     },
   });
+}
+
+
+export async function updateDealWithActivity(id: string, payload: any, userId: number) {
+  // Lấy deal cũ để biết stage trước đó
+  const old = await prisma.deal.findUnique({
+    where: { id },
+    select: { stage: true },
+  });
+  if (!old) throw new Error("Deal not found");
+
+  // Update deal
+  const updated = await prisma.deal.update({
+    where: { id },
+    data: {
+      title: payload.title,
+      description: payload.description,
+      amount: payload.amount,
+      currency: payload.currency,
+      stage: payload.stage as DealStage,
+      // ... các field bạn cho phép sửa
+    },
+  });
+
+  // Nếu stage thay đổi → tạo activity
+  if (payload.stage && payload.stage !== old.stage) {
+    await prisma.dealActivity.create({
+      data: {
+        dealId: id,
+        authorId: userId,
+        content: `Stage changed from ${old.stage} to ${payload.stage}`,
+        activityAt: new Date(),
+      },
+    });
+  }
+
+  return updated;
 }
