@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient , CustomerSegment } from "@prisma/client";
+import { PrismaClient, CustomerSegment } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -12,11 +12,11 @@ export async function listCustomersHandler(req: Request, res: Response) {
   const where = q
     ? {
         OR: [
-        { name: { contains: q, mode: "insensitive" } },
-        { externalId: { contains: q } },
-        { email: { contains: q, mode: "insensitive" } },
-        { phoneNumber: { contains: q } },
-      ],
+          { name: { contains: q, mode: "insensitive" } },
+          { externalId: { contains: q } },
+          { email: { contains: q, mode: "insensitive" } },
+          { phoneNumber: { contains: q } },
+        ],
       }
     : {};
 
@@ -32,10 +32,10 @@ export async function listCustomersHandler(req: Request, res: Response) {
         name: true,
         avatarUrl: true,
         note: true,
-        phoneNumber:true,
-        email:true,
-        segment:true,
-        address:true,
+        phoneNumber: true,
+        email: true,
+        segment: true,
+        address: true,
         createdAt: true,
         updatedAt: true,
         conversation: {
@@ -119,7 +119,7 @@ export async function getCustomerHandler(req: Request, res: Response) {
           subject: true,
           status: true,
           priority: true,
-          
+
           dueAt: true,
           createdAt: true,
           assignee: {
@@ -184,14 +184,7 @@ export async function getCustomerHandler(req: Request, res: Response) {
 }
 
 export async function createCustomer(req: Request, res: Response) {
-  const {
-    name,
-    email,
-    phoneNumber,
-    address,
-    segment,
-    note,
-  } = req.body as {
+  const { name, email, phoneNumber, address, segment, note } = req.body as {
     name?: string;
     email?: string | null;
     phoneNumber?: string | null;
@@ -258,21 +251,13 @@ export async function createCustomer(req: Request, res: Response) {
   }
 }
 
-
 export async function updateCustomerHandler(req: Request, res: Response) {
   const idNum = Number(req.params.id);
   if (!idNum || !Number.isFinite(idNum)) {
     return res.status(400).json({ error: "Invalid customer id" });
   }
 
-  const {
-    name,
-    note,
-    segment,
-    email,
-    phoneNumber,
-    address,
-  } = req.body as {
+  const { name, note, segment, email, phoneNumber, address } = req.body as {
     name?: string | null;
     note?: string | null;
     segment?: CustomerSegment | string | null;

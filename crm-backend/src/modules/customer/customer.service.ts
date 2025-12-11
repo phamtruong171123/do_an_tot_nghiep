@@ -1,4 +1,3 @@
-
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -26,10 +25,7 @@ export async function findOrCreateCustomerByExternalId(params: {
         avatarUrl: avatarUrl || null,
       },
     });
-  } else if (
-    (name && name !== customer.name) ||
-    (avatarUrl && avatarUrl !== customer.avatarUrl)
-  ) {
+  } else if ((name && name !== customer.name) || (avatarUrl && avatarUrl !== customer.avatarUrl)) {
     customer = await prisma.customer.update({
       where: { id: customer.id },
       data: {

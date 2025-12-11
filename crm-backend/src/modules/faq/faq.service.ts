@@ -15,10 +15,7 @@ export async function listFaqs(params: ListFaqParams) {
       AND: [
         keyword
           ? {
-              OR: [
-                { question: { contains: keyword } },
-                { answer: { contains: keyword } },
-              ],
+              OR: [{ question: { contains: keyword } }, { answer: { contains: keyword } }],
             }
           : {},
         typeof isActive === "boolean" ? { isActive } : {},
@@ -80,10 +77,7 @@ export async function searchFaqForSuggestion(text: string, limit = 5) {
   return prisma.faq.findMany({
     where: {
       isActive: true,
-      OR: [
-        { question: { contains: text } },
-        { answer: { contains: text } },
-      ],
+      OR: [{ question: { contains: text } }, { answer: { contains: text } }],
     },
     orderBy: { updatedAt: "desc" },
     take: limit,

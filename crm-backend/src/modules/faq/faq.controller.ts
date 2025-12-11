@@ -1,18 +1,10 @@
 import { Request, Response } from "express";
-import {
-  listFaqs,
-  getFaq,
-  createFaq,
-  updateFaq,
-  deleteFaq,
-} from "./faq.service";
+import { listFaqs, getFaq, createFaq, updateFaq, deleteFaq } from "./faq.service";
 
 export async function listFaqsHandler(req: Request, res: Response) {
   const keyword = req.query.keyword as string | undefined;
   const isActive =
-    typeof req.query.isActive === "string"
-      ? req.query.isActive === "true"
-      : undefined;
+    typeof req.query.isActive === "string" ? req.query.isActive === "true" : undefined;
 
   const faqs = await listFaqs({ keyword, isActive });
   return res.json(faqs);
@@ -32,9 +24,7 @@ export async function createFaqHandler(req: Request, res: Response) {
   const { question, answer, tags, language, isActive } = req.body || {};
 
   if (!question || !answer) {
-    return res
-      .status(400)
-      .json({ message: "question and answer are required" });
+    return res.status(400).json({ message: "question and answer are required" });
   }
 
   const created = await createFaq({
@@ -55,9 +45,7 @@ export async function updateFaqHandler(req: Request, res: Response) {
   const { question, answer, tags, language, isActive } = req.body || {};
 
   if (!question || !answer) {
-    return res
-      .status(400)
-      .json({ message: "question and answer are required" });
+    return res.status(400).json({ message: "question and answer are required" });
   }
 
   const updated = await updateFaq(id, {

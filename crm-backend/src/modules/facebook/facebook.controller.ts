@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import { saveInboundMessage, findOrCreateConversationByPageAndUser, saveOutboundMessage } from "../chat/chat.service";
+import {
+  saveInboundMessage,
+  findOrCreateConversationByPageAndUser,
+  saveOutboundMessage,
+} from "../chat/chat.service";
 import { sendTextMessageViaGraph } from "./facebook.service";
 import { broadcastMessage } from "../chat/chat.socket";
 import { autoReplyByFaqIfMatch } from "../ai/aiSuggestion.service";
@@ -12,7 +16,6 @@ export function verifyWebhook(req: Request, res: Response) {
 
   if (mode === "subscribe" && token === process.env.FB_VERIFY_TOKEN) {
     return res.status(200).send(challenge);
-    
   }
   return res.sendStatus(403);
 }
@@ -50,14 +53,11 @@ export async function receiveWebhook(req: Request, res: Response) {
           const textRaw = (message.text || "").trim();
           inboundText =
             textRaw ||
-            (Array.isArray(message.attachments) &&
-            message.attachments.length > 0
+            (Array.isArray(message.attachments) && message.attachments.length > 0
               ? `[${message.attachments[0].type} attachment]`
               : "");
         } else if (postback) {
-          inboundText =
-            String(postback.title || postback.payload || "").trim() ||
-            "[postback]";
+          inboundText = String(postback.title || postback.payload || "").trim() || "[postback]";
         }
 
         // Nếu không rơi vào message/postback hoặc không có nội dung xử lý
@@ -67,7 +67,6 @@ export async function receiveWebhook(req: Request, res: Response) {
           continue;
         }
 
-  
         const saved = await saveInboundMessage(pageId, userPsid, inboundText, mid);
         const m = saved.message;
 
@@ -76,7 +75,7 @@ export async function receiveWebhook(req: Request, res: Response) {
           id: m.id,
           direction: m.direction, // "IN"
           text: m.text,
-          sentBy:m.sentBy,
+          sentBy: m.sentBy,
           createdAt: m.createdAt,
           status: m.status,
         });
@@ -97,7 +96,6 @@ export async function receiveWebhook(req: Request, res: Response) {
     return res.sendStatus(500);
   }
 }
-
 
 function normalizeAttachments(raw?: any[]) {
   if (!Array.isArray(raw)) return [];
@@ -120,15 +118,15 @@ function normalizeAttachments(raw?: any[]) {
  */
 export async function sendMessage(req: Request, res: Response) {
   const pageId = String(req.body?.pageId || process.env.FB_PAGE_ID || "");
-  const psid   = String(req.body?.toUserId || "");
-  const text   = String(req.body?.text || "");
-  
+  const psid = String(req.body?.toUserId || "");
+  const text = String(req.body?.text || "");
+
   console.log("Send message request:", { pageId, psid, text });
-  if (!pageId) return res.status(400).json({ error: "pageId required (env FB_PAGE_ID or in body)" });
+  if (!pageId)
+    return res.status(400).json({ error: "pageId required (env FB_PAGE_ID or in body)" });
   if (!psid || !text) return res.status(400).json({ error: "toUserId & text required" });
 
   try {
-    
     const { conversation: conv } = await findOrCreateConversationByPageAndUser(pageId, psid);
 
     // gửi ra Facebook
@@ -142,18 +140,14 @@ export async function sendMessage(req: Request, res: Response) {
       id: msg.id,
       direction: msg.direction,
       text: msg.text,
-      sentBy:msg.sentBy,
+      sentBy: msg.sentBy,
       createdAt: msg.createdAt,
       status: msg.status,
     });
-   
+
     return res.json({ ok: true, message: msg });
-  
   } catch (e: any) {
     console.error("Send error:", e?.message || e);
     return res.status(500).json({ error: e?.message || "Send failed" });
   }
 }
-
-
-

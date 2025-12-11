@@ -1,6 +1,5 @@
-
 import { Request, Response } from "express";
-import { PrismaClient, TicketPriority, TicketStatus , UserStatus} from "@prisma/client";
+import { PrismaClient, TicketPriority, TicketStatus, UserStatus } from "@prisma/client";
 import { createTicket, listTickets, getTicket, updateTicket } from "./ticket.service";
 import { findOrCreateCustomerByExternalId } from "../customer/customer.service";
 
@@ -13,10 +12,7 @@ type AuthUser = {
 };
 
 function parseUserId(req: Request): number | null {
-  const raw =
-    (req as any).userId ||
-    (req.body as any)?.userId ||
-    (req.query as any)?.userId;
+  const raw = (req as any).userId || (req.body as any)?.userId || (req.query as any)?.userId;
   const id = Number(raw);
   if (!id || !Number.isFinite(id)) return null;
   return id;
@@ -24,8 +20,7 @@ function parseUserId(req: Request): number | null {
 
 // ========== CRUD TICKET cơ bản ==========
 
-
-// List ticket của một user 
+// List ticket của một user
 export async function listTicketsByUserHandler(req: Request, res: Response) {
   const authUser = (req as any).user as AuthUser | undefined;
   if (!authUser) return res.status(401).json({ message: "Unauthenticated" });
@@ -55,7 +50,7 @@ export async function listTicketsByUserHandler(req: Request, res: Response) {
       userId: targetUserId,
       status,
       assigneeId: targetUserId, // tất cả ticket được assign cho user này
-      mine: false,              // không dùng mine ở đây
+      mine: false, // không dùng mine ở đây
       q,
       limit,
       offset,
@@ -71,16 +66,9 @@ export async function listTicketsByUserHandler(req: Request, res: Response) {
         status: t.status,
         priority: t.priority,
         dueAt: t.dueAt,
-        isOverdue:
-          !!t.dueAt &&
-          (t.status === "OPEN" || t.status === "PENDING") &&
-          now > t.dueAt,
-        assignee: t.assignee
-          ? { id: t.assignee.id, name: t.assignee.username }
-          : null,
-        customer: t.customer
-          ? { id: t.customer.id, name: t.customer.name }
-          : null,
+        isOverdue: !!t.dueAt && (t.status === "OPEN" || t.status === "PENDING") && now > t.dueAt,
+        assignee: t.assignee ? { id: t.assignee.id, name: t.assignee.username } : null,
+        customer: t.customer ? { id: t.customer.id, name: t.customer.name } : null,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
       })),
@@ -91,7 +79,6 @@ export async function listTicketsByUserHandler(req: Request, res: Response) {
     return res.status(500).json({ error: "Failed to list tickets by user" });
   }
 }
-
 
 export async function listTicketsHandler(req: Request, res: Response) {
   const authUser = (req as any).user as AuthUser | undefined;
@@ -111,9 +98,7 @@ export async function listTicketsHandler(req: Request, res: Response) {
     ? (statusParam as TicketStatus)
     : undefined;
 
-  const assigneeId = req.query.assigneeId
-    ? Number(req.query.assigneeId)
-    : undefined;
+  const assigneeId = req.query.assigneeId ? Number(req.query.assigneeId) : undefined;
 
   try {
     const data = await listTickets({
@@ -136,16 +121,9 @@ export async function listTicketsHandler(req: Request, res: Response) {
         status: t.status,
         priority: t.priority,
         dueAt: t.dueAt,
-        isOverdue:
-          !!t.dueAt &&
-          (t.status === "OPEN" || t.status === "PENDING") &&
-          now > t.dueAt,
-        assignee: t.assignee
-          ? { id: t.assignee.id, name: t.assignee.username }
-          : null,
-        customer: t.customer
-          ? { id: t.customer.id, name: t.customer.name }
-          : null,
+        isOverdue: !!t.dueAt && (t.status === "OPEN" || t.status === "PENDING") && now > t.dueAt,
+        assignee: t.assignee ? { id: t.assignee.id, name: t.assignee.username } : null,
+        customer: t.customer ? { id: t.customer.id, name: t.customer.name } : null,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
         notesCount: t._count?.notes ?? 0,
@@ -174,18 +152,11 @@ export async function getTicketHandler(req: Request, res: Response) {
       status: t.status,
       priority: t.priority,
       dueAt: t.dueAt,
-      isOverdue:
-        !!t.dueAt &&
-        (t.status === "OPEN" || t.status === "PENDING") &&
-        now > t.dueAt,
+      isOverdue: !!t.dueAt && (t.status === "OPEN" || t.status === "PENDING") && now > t.dueAt,
       resolvedAt: t.resolvedAt,
       closedAt: t.closedAt,
-      assignee: t.assignee
-        ? { id: t.assignee.id, name: t.assignee.username }
-        : null,
-      createdBy: t.createdBy
-        ? { id: t.createdBy.id, name: t.createdBy.username }
-        : null,
+      assignee: t.assignee ? { id: t.assignee.id, name: t.assignee.username } : null,
+      createdBy: t.createdBy ? { id: t.createdBy.id, name: t.createdBy.username } : null,
       customer: t.customer
         ? {
             id: t.customer.id,
@@ -210,14 +181,7 @@ export async function createTicketHandler(req: Request, res: Response) {
 
   const { id: userId, role } = authUser;
 
-  const {
-    subject,
-    description,
-    priority,
-    conversationId,
-    customerId,
-    assigneeId,
-  } = req.body as {
+  const { subject, description, priority, conversationId, customerId, assigneeId } = req.body as {
     subject?: string;
     description?: string;
     priority?: TicketPriority;
@@ -271,7 +235,6 @@ export async function createTicketHandler(req: Request, res: Response) {
   }
 }
 
-
 export async function updateTicketHandler(req: Request, res: Response) {
   const authUser = (req as any).user as AuthUser | undefined;
   if (!authUser) return res.status(401).json({ message: "Unauthenticated" });
@@ -291,9 +254,9 @@ export async function updateTicketHandler(req: Request, res: Response) {
         where: { id },
         select: { assigneeId: true, createdById: true, status: true },
       });
-      
+
       if (!t) return res.status(404).json({ error: "Ticket not found" });
-      
+
       if (t.assigneeId !== authUser.id && t.createdById !== authUser.id) {
         return res.status(403).json({ error: "Forbidden" });
       }
@@ -312,7 +275,6 @@ export async function updateTicketHandler(req: Request, res: Response) {
 
     const ticket = await updateTicket(id, dataToUpdate);
 
-
     // nếu đổi status thì note lại
     if (status) {
       await prisma.ticketNote.create({
@@ -328,9 +290,7 @@ export async function updateTicketHandler(req: Request, res: Response) {
     return res.json(ticket);
   } catch (e: any) {
     console.error(e);
-    return res
-      .status(400)
-      .json({ error: e?.message || "Failed to update ticket" });
+    return res.status(400).json({ error: e?.message || "Failed to update ticket" });
   }
 }
 
@@ -366,23 +326,17 @@ export async function assignTicketHandler(req: Request, res: Response) {
     const ticket = await updateTicket(id, {
       assigneeId,
     });
-  const result= res.json(ticket);
-   return result;
+    const result = res.json(ticket);
+    return result;
   } catch (e: any) {
     console.error(e);
-    return res
-      .status(400)
-      .json({ error: e?.message || "Failed to assign ticket" });
+    return res.status(400).json({ error: e?.message || "Failed to assign ticket" });
   }
 }
 
-
 // ========== Tạo ticket từ Conversation (dùng cho màn Chat) ==========
 
-export async function createTicketFromConversationHandler(
-  req: Request,
-  res: Response
-) {
+export async function createTicketFromConversationHandler(req: Request, res: Response) {
   const authUser = (req as any).user as AuthUser | undefined;
   if (!authUser) return res.status(401).json({ message: "Unauthenticated" });
 
@@ -444,9 +398,7 @@ export async function createTicketFromConversationHandler(
     return res.status(201).json(ticket);
   } catch (e: any) {
     console.error(e);
-    return res
-      .status(500)
-      .json({ error: "Failed to create ticket from conversation" });
+    return res.status(500).json({ error: "Failed to create ticket from conversation" });
   }
 }
 
@@ -490,7 +442,6 @@ export async function listTicketNotesHandler(req: Request, res: Response) {
   }
 }
 
-
 // Tạo ghi chú cho ticket
 export async function createTicketNoteHandler(req: Request, res: Response) {
   const user = (req as any).user as AuthUser | undefined;
@@ -531,7 +482,3 @@ export async function createTicketNoteHandler(req: Request, res: Response) {
 
   return res.status(201).json(note);
 }
-
-
-
-

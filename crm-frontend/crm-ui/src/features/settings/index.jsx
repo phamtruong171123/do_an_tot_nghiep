@@ -50,7 +50,7 @@ export default function SettingsPage({ me }) {
         {isAdmin && (
           <button
             className={styles.card}
-            onClick={() => navigate("/app/admin/settings/gpt")}
+            onClick={() => navigate("/app/admin/settings/gpt-config")}
           >
             <div className={styles.cardTitle}>GPT Configuration</div>
             <div className={styles.cardDesc}>

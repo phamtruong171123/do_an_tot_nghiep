@@ -9,8 +9,17 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
+    "prettier": "^3.7.4",
     "sass": "^1.94.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
-  }
+  },
+   "scripts": {
+    "format": "prettier --write \"crm-backend/src/**/*.{ts,tsx,js,jsx,json,md}\" \"crm-frontend/src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format:backend": "prettier --write \"crm-backend/src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:frontend": "prettier --write \"crm-frontend/crm-ui/src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\""
+   }
+   
+
+
 }

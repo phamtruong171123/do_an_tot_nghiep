@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";  
+import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 import {
@@ -18,9 +18,11 @@ export async function listConversationsHandler(req: Request, res: Response) {
   const mine = String(req.query.mine || "0") === "1";
 
   // nếu chưa có auth, tạm dùng DEFAULT_ASSIGNEE_USER_ID khi mine=1
-  const meId = (req as any)?.user?.id ?? (mine && process.env.DEFAULT_ASSIGNEE_USER_ID
-    ? Number(process.env.DEFAULT_ASSIGNEE_USER_ID)
-    : null);
+  const meId =
+    (req as any)?.user?.id ??
+    (mine && process.env.DEFAULT_ASSIGNEE_USER_ID
+      ? Number(process.env.DEFAULT_ASSIGNEE_USER_ID)
+      : null);
 
   const rows = await listConversations({ q, mineUserId: mine ? meId : null, limit });
 
@@ -66,13 +68,13 @@ export async function postMessageHandler(req: Request, res: Response) {
 
   // gửi ra Facebook
   const fb = await sendTextMessageViaGraph(conv.channel.pageId, conv.externalUserId, text);
-  const msg = await saveOutboundMessage(conv.id, text, fb?.message_id,  );
+  const msg = await saveOutboundMessage(conv.id, text, fb?.message_id);
 
   broadcastMessage(conv.id, {
     id: msg.id,
     direction: msg.direction,
     text: msg.text,
-    sentBy:msg.sentBy,
+    sentBy: msg.sentBy,
     createdAt: msg.createdAt,
     status: msg.status,
   });
@@ -117,7 +119,6 @@ export async function markConversationRead(req: Request, res: Response) {
     unread: conv.unreadCount,
   });
 }
-
 
 export async function getConversationCustomerHandler(req: Request, res: Response) {
   const { conversationId } = req.params;

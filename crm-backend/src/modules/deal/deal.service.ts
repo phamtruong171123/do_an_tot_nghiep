@@ -1,4 +1,4 @@
-import { PrismaClient, DealStage, Prisma } from '@prisma/client';
+import { PrismaClient, DealStage, Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -6,43 +6,41 @@ const prisma = new PrismaClient();
  * List deals, có thể filter theo customerId
  */
 export async function listDeals(params: {
-  customerId?: number;  
+  customerId?: number;
   page?: number;
   pageSize?: number;
   search?: string;
-  sortBy?: 'createdAt' | 'amount' | 'appointmentAt';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "createdAt" | "amount" | "appointmentAt";
+  sortOrder?: "asc" | "desc";
 }) {
   const {
     customerId,
     page = 1,
     pageSize = 20,
     search,
-    sortBy = 'createdAt',
-    sortOrder = 'desc',
+    sortBy = "createdAt",
+    sortOrder = "desc",
   } = params;
 
   const where: Prisma.DealWhereInput = {};
 
-  if (typeof customerId === 'number') {
+  if (typeof customerId === "number") {
     where.customerId = customerId;
   }
 
   // 🔍 search theo title + customer.name
-  if (search && search.trim() !== '') {
+  if (search && search.trim() !== "") {
     const q = search.trim();
     where.OR = [
       {
         title: {
           contains: q,
-  
         },
       },
       {
         customer: {
           name: {
             contains: q,
-       
           },
         },
       },
@@ -53,13 +51,13 @@ export async function listDeals(params: {
   let orderBy: Prisma.DealOrderByWithRelationInput;
 
   switch (sortBy) {
-    case 'amount':
+    case "amount":
       orderBy = { amount: sortOrder };
       break;
-    case 'appointmentAt':
+    case "appointmentAt":
       orderBy = { appointmentAt: sortOrder };
       break;
-    case 'createdAt':
+    case "createdAt":
     default:
       orderBy = { createdAt: sortOrder };
       break;
@@ -86,7 +84,6 @@ export async function listDeals(params: {
   return { items, total, page, pageSize };
 }
 
-
 /**
  * Lấy chi tiết 1 deal
  */
@@ -99,11 +96,11 @@ export async function getDeal(id: string) {
         select: { id: true, fullName: true, email: true },
       },
       activities: {
-        orderBy: { activityAt: 'desc' },
+        orderBy: { activityAt: "desc" },
         take: 20,
         include: {
           author: {
-            select: { id: true, fullName: true }, 
+            select: { id: true, fullName: true },
           },
         },
       },
@@ -115,7 +112,7 @@ export async function getDeal(id: string) {
  * Tạo deal mới
  */
 export async function createDeal(data: {
-  customerId: number;  
+  customerId: number;
   title: string;
   description?: string;
   amount?: number;
@@ -123,16 +120,16 @@ export async function createDeal(data: {
   appointmentAt?: Date;
   ownerId?: number;
 }) {
-  const code = 'DE-' + Date.now(); // TODO: generate code đẹp hơn nếu cần
+  const code = "DE-" + Date.now(); // TODO: generate code đẹp hơn nếu cần
 
   return prisma.deal.create({
     data: {
       code,
       title: data.title,
       description: data.description,
-      customerId: data.customerId,   
+      customerId: data.customerId,
       amount: data.amount,
-      currency: data.currency ?? 'VND',
+      currency: data.currency ?? "VND",
       appointmentAt: data.appointmentAt,
       ownerId: data.ownerId,
     },
@@ -153,7 +150,7 @@ export async function updateDeal(
     appointmentAt: Date;
     closedAt: Date | null;
     ownerId: number | null;
-  }>,
+  }>
 ) {
   return prisma.deal.update({
     where: { id },
@@ -179,22 +176,19 @@ export async function addDealActivity(data: {
     },
     include: {
       author: {
-        select: { id: true, fullName: true }, 
+        select: { id: true, fullName: true },
       },
     },
   });
 }
 
 /**
- * List activity của deal 
+ * List activity của deal
  */
-export async function listDealActivities(
-  dealId: string,
-  limit = 20,
-) {
+export async function listDealActivities(dealId: string, limit = 20) {
   return prisma.dealActivity.findMany({
     where: { dealId },
-    orderBy: { activityAt: 'desc' },
+    orderBy: { activityAt: "desc" },
     take: limit,
     include: {
       author: { select: { id: true, fullName: true } },
@@ -203,15 +197,12 @@ export async function listDealActivities(
 }
 
 /**
- * Recent deals cho 1 customer 
+ * Recent deals cho 1 customer
  */
-export async function listRecentDealsForCustomer(
-  customerId: number,  
-  limit = 5,
-) {
+export async function listRecentDealsForCustomer(customerId: number, limit = 5) {
   return prisma.deal.findMany({
     where: { customerId },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
     take: limit,
     select: {
       id: true,
@@ -224,7 +215,6 @@ export async function listRecentDealsForCustomer(
     },
   });
 }
-
 
 export async function updateDealWithActivity(id: string, payload: any, userId: number) {
   // Lấy deal cũ để biết stage trước đó

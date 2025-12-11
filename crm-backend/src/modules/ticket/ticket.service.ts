@@ -1,4 +1,3 @@
-
 import { PrismaClient, TicketPriority, TicketStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -49,7 +48,7 @@ export type CreateTicketInput = {
   description?: string | null;
   priority?: TicketPriority;
   conversationId?: string | null;
-  customerId?: number | null;   
+  customerId?: number | null;
   assigneeId?: number | null;
   createdById: number;
 };
@@ -104,10 +103,7 @@ export async function listTickets(params: {
   if (typeof assigneeId === "number") where.assigneeId = assigneeId;
   if (mine) where.assigneeId = userId;
   if (q && q.trim()) {
-    where.OR = [
-      { code: { contains: q,  } },
-      { subject: { contains: q,  } },
-    ];
+    where.OR = [{ code: { contains: q } }, { subject: { contains: q } }];
   }
 
   const [items, total] = await Promise.all([
@@ -120,8 +116,8 @@ export async function listTickets(params: {
         assignee: { select: { id: true, username: true } },
         customer: { select: { id: true, name: true } },
         _count: {
-          select: {notes:true},
-        }
+          select: { notes: true },
+        },
       },
     }),
     prisma.ticket.count({ where }),
@@ -151,10 +147,9 @@ export type UpdateTicketInput = {
   assigneeId?: number | null;
 };
 
-export async function getTicketByUser(userId: number){
+export async function getTicketByUser(userId: number) {
   const tickets = await prisma.ticket.findMany({
     where: { assigneeId: userId },
-    
   });
   return tickets;
 }
@@ -163,12 +158,11 @@ export async function updateTicket(id: string, input: UpdateTicketInput) {
   const ticket = await prisma.ticket.findUnique({ where: { id } });
   if (!ticket) throw new Error("Ticket not found");
 
-  if(ticket.status === "CLOSED"){
+  if (ticket.status === "CLOSED") {
     throw new Error("Cannot update a closed ticket");
   }
   const data: any = { ...input };
-  if(input.status==="CLOSED"){
-
+  if (input.status === "CLOSED") {
   }
   // nếu đổi priority thì tính lại dueAt
   if (input.priority && input.priority !== ticket.priority) {

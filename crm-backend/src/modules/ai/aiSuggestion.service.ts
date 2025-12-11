@@ -1,56 +1,72 @@
-// src/modules/ai/aiSuggestion.service.ts
 import { PrismaClient } from "@prisma/client";
 import OpenAI from "openai";
 
 import { saveOutboundMessage } from "../chat/chat.service";
 import { sendTextMessageViaGraph } from "../facebook/facebook.service";
 import { broadcastMessage } from "../chat/chat.socket";
+import { getGptConfig } from "../gptConfig/gptConfig.service";
 
 const prisma = new PrismaClient();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
-
 export type AiSuggestionResult = {
   source: "faq_ai" | "no_faq_match" | "ai_error";
-  suggestion: string | null;       // Text gửi thẳng cho khách
+  suggestion: string | null; // Text gửi thẳng cho khách
   matchedFaqIds: number[];
 };
 
 // ===== Helper: chuẩn hoá & tokenize tiếng Việt =====
 const STOPWORDS = new Set([
-  "la", "là", "va", "và", "ben", "bên", "khoang", "khoảng",
-  "bao", "nhieu", "nhiêu", "vay", "vậy", "a", "ạ", "em",
-  "anh", "chi", "chị", "co", "cô", "chu", "chú", "shop"
+  "la",
+  "là",
+  "va",
+  "và",
+  "ben",
+  "bên",
+  "khoang",
+  "khoảng",
+  "bao",
+  "nhieu",
+  "nhiêu",
+  "vay",
+  "vậy",
+  "a",
+  "ạ",
+  "em",
+  "anh",
+  "chi",
+  "chị",
+  "co",
+  "cô",
+  "chu",
+  "chú",
+  "shop",
 ]);
 
 function normalizeText(input: string): string {
-  return input
-    .toLowerCase()
-    // bỏ dấu tiếng Việt
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    // bỏ ký tự không phải chữ/số
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    input
+      .toLowerCase()
+      // bỏ dấu tiếng Việt
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      // bỏ ký tự không phải chữ/số
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 function tokenize(input: string): string[] {
   const norm = normalizeText(input);
   if (!norm) return [];
-  return norm
-    .split(" ")
-    .filter((w) => w.length >= 2 && !STOPWORDS.has(w));
+  return norm.split(" ").filter((w) => w.length >= 2 && !STOPWORDS.has(w));
 }
 
-// ===== Sửa hàm tìm FAQ khớp =====
 async function findFaqCandidates(text: string, limit = 3) {
   const tokens = tokenize(text);
   if (!tokens.length) return [];
 
-  // Lấy tất cả FAQ active (ít record nên ok)
+  // Lấy tất cả FAQ active
   const faqs = await prisma.faq.findMany({
     where: { isActive: true },
   });
@@ -58,31 +74,27 @@ async function findFaqCandidates(text: string, limit = 3) {
   // Chấm điểm từng FAQ theo số từ trùng
   const scored = faqs
     .map((f) => {
-      const haystackTokens = new Set(
-        tokenize(`${f.question} ${f.answer}`)
-      );
+      const haystackTokens = new Set(tokenize(`${f.question} ${f.answer}`));
 
       let matches = 0;
       for (const t of tokens) {
         if (haystackTokens.has(t)) matches++;
       }
 
-      const score =
-        matches === 0 ? 0 : matches / tokens.length; // Jaccard đơn giản
+      const score = matches === 0 ? 0 : matches / tokens.length; // tỉ lệ từ trùng trên tổng số từ của câu hỏi
 
       return { faq: f, score };
     })
-    .filter((x) => x.score >= 0.4) // ngưỡng tối thiểu, có thể chỉnh 0.15–0.3
+    .filter((x) => x.score >= 0.4)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
   return scored.map((s) => s.faq);
 }
 
-// Sinh câu trả lời từ FAQ bằng OpenAI – trả về 1 câu cho khách
-export async function generateSuggestionFromFaq(
-  text: string
-): Promise<AiSuggestionResult> {
+// Sinh câu trả lời từ FAQ bằng OpenAI
+export async function generateSuggestionFromFaq(text: string): Promise<AiSuggestionResult> {
+  const gptConfig = await getGptConfig();
   const trimmed = text?.trim();
   if (!trimmed) {
     return { source: "ai_error", suggestion: null, matchedFaqIds: [] };
@@ -102,13 +114,17 @@ A: ${f.answer}`
     .join("\n\n");
 
   try {
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
         {
           role: "system",
-          content: // nội dung yêu cầu khách sẽ làm động ui sau
-            "Bạn là nhân viên chăm sóc khách hàng. Hãy trả lời trực tiếp cho khách bằng tiếng Việt, lịch sự, ngắn gọn. Không nói về FAQ, AI hay quy trình nội bộ.",
+          content:
+            gptConfig.systemPrompt ||
+            "You are an AI assistant that helps answer customer questions based on provided FAQ information.",
         },
         {
           role: "user",
@@ -123,11 +139,10 @@ A: ${f.answer}`
         },
       ],
       max_tokens: 200,
-      temperature: 0.2,
+      temperature: gptConfig.temperature,
     });
 
-    const suggestion =
-      completion.choices[0]?.message?.content?.trim() || "";
+    const suggestion = completion.choices[0]?.message?.content?.trim() || "";
 
     if (!suggestion) {
       return { source: "ai_error", suggestion: null, matchedFaqIds: [] };
@@ -150,10 +165,10 @@ A: ${f.answer}`
 
 // Bối cảnh để auto-reply (Facebook)
 type AutoReplyContext = {
-  pageId: string;          // Page Id từ webhook
-  psid: string;            // PSID của khách
-  conversationId: string;  // id Conversation trong DB
-  text: string;            // nội dung khách vừa gửi
+  pageId: string; // Page Id từ webhook
+  psid: string; // PSID của khách
+  conversationId: string; // id Conversation trong DB
+  text: string; // nội dung khách vừa gửi
 };
 
 /**
@@ -179,22 +194,17 @@ export async function autoReplyByFaqIfMatch(ctx: AutoReplyContext) {
 
     // 1) Gửi ra Facebook
     const fbRes = await sendTextMessageViaGraph(ctx.pageId, ctx.psid, replyText);
-    const externalMessageId =
-      (fbRes as any)?.message_id || (fbRes as any)?.id || undefined;
+    const externalMessageId = (fbRes as any)?.message_id || (fbRes as any)?.id || undefined;
 
     // 2) Lưu OUTBOUND message vào DB
-    const msg = await saveOutboundMessage(
-      ctx.conversationId,
-      replyText,
-      externalMessageId,"BOT"
-    );
+    const msg = await saveOutboundMessage(ctx.conversationId, replyText, externalMessageId, "BOT");
 
     // 3) Broadcast cho FE qua socket (để Agent vẫn thấy bot trả lời)
     broadcastMessage(ctx.conversationId, {
       id: msg.id,
       direction: msg.direction, // "OUT"
       text: msg.text,
-      sentBy:msg.sentBy,
+      sentBy: msg.sentBy,
       createdAt: msg.createdAt,
       status: msg.status,
     });

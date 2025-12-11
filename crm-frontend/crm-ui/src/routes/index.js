@@ -15,7 +15,7 @@ import FaqPage from "../features/faq/FaqPage";
 import DealPage from '../features/deal/DealPage';
 import DealDetailPage from '../features/deal/DealDetailPage';
 import SettingsPage from "../features/settings";
-
+import GptConfigPage from "../features/gpt-config/GptConfigPage";
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
   catch { return null; }
@@ -82,11 +82,11 @@ export default function AppRoutes() {
           <Route path="tickets"   element={<TicketPage />} />
           <Route path="contacts"  element={<CustomerPage />} />
           <Route path="deals" element={<DealPage />} />
-<Route path="deals/:id" element={<DealDetailPage />} />
+          <Route path="deals/:id" element={<DealDetailPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="settings" element={<SettingsPage me={me} />} />
           <Route path="faq"       element={<FaqPage currentUser={me} />} />
-
+          <Route path="settings/gpt-config" element={<GptConfigPage/>} />
           {/* User management chỉ nằm trong admin, không có /users tự do nữa */}
           <Route path="users"     element={<UserManagement />} />
         </Route>

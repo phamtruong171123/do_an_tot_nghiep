@@ -16,7 +16,7 @@ router.get("/", authRequired, listCustomersHandler);
 router.get("/:id", authRequired, getCustomerHandler);
 
 // Tạo khách hàng
-router.post("/",authRequired,createCustomer);
+router.post("/", authRequired, createCustomer);
 
 // Cập nhật thông tin khách hàng (name, note)
 router.patch("/:id", authRequired, updateCustomerHandler);

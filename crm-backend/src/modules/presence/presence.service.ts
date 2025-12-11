@@ -1,4 +1,3 @@
-
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
@@ -31,6 +30,7 @@ export async function getOnlineMap(userIds: number[]) {
     select: { userId: true, online: true, lastOnlineAt: true, userLoad: true },
   });
   const map: Record<number, { online: boolean; lastOnlineAt: Date | null; userLoad: number }> = {};
-  for (const r of rows) map[r.userId] = { online: r.online, lastOnlineAt: r.lastOnlineAt, userLoad: r.userLoad };
+  for (const r of rows)
+    map[r.userId] = { online: r.online, lastOnlineAt: r.lastOnlineAt, userLoad: r.userLoad };
   return map;
 }

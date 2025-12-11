@@ -4,7 +4,6 @@ import { suggestFromFaqHandler } from "./aiSuggestion.controller";
 
 const router = Router();
 
-
 router.post("/suggestions", authRequired, suggestFromFaqHandler);
 
 export default router;

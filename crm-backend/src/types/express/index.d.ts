@@ -1,7 +1,9 @@
-import { JwtUser } from '../../middleware/auth';
+import { JwtUser } from "../../middleware/auth";
 declare global {
   namespace Express {
-    interface Request { user?: JwtUser; }
+    interface Request {
+      user?: JwtUser;
+    }
   }
 }
 export {};

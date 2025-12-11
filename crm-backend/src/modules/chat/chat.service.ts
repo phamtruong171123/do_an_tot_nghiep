@@ -3,15 +3,12 @@ import { fetchFacebookUserProfile } from "../facebook/facebook.service";
 import { findOrCreateCustomerByExternalId } from "../customer/customer.service";
 const prisma = new PrismaClient();
 
-
 // Tìm hoặc tạo Conversation dựa trên pageId và externalUserId (PSID).
 export async function findOrCreateConversationByPageAndUser(
   pageId: string,
   externalUserId: string,
   opts?: { title?: string | null; avatarUrl?: string | null }
 ) {
-  
-
   // 1. Tìm channel theo pageId
   const channel = await prisma.channel.findUnique({
     where: { pageId },
@@ -19,7 +16,7 @@ export async function findOrCreateConversationByPageAndUser(
   if (!channel) {
     throw new Error(`Channel not found for pageId=${pageId}`);
   }
-  
+
   const profile = await fetchFacebookUserProfile(pageId, externalUserId);
   const { name: title, avatarUrl } = profile;
   // 2. Tìm / tạo customer theo externalId = PSID
@@ -47,7 +44,7 @@ export async function findOrCreateConversationByPageAndUser(
         externalUserId,
         title: title || null,
         avataUrl: avatarUrl || null,
-        customerId: customer.id,     
+        customerId: customer.id,
       },
     });
   } else if (!conversation.customerId || conversation.customerId !== customer.id) {
@@ -72,22 +69,18 @@ export async function saveInboundMessage(
   text: string,
   mid?: string
 ) {
-  const { conversation } = await findOrCreateConversationByPageAndUser(
-    pageId,
-    externalUserId
-  );
+  const { conversation } = await findOrCreateConversationByPageAndUser(pageId, externalUserId);
 
   const msg = await prisma.message.upsert({
     where: {
-      externalMessageId:
-        mid ?? `__nil_${pageId}_${externalUserId}_${Date.now()}`,
+      externalMessageId: mid ?? `__nil_${pageId}_${externalUserId}_${Date.now()}`,
     },
     update: {},
     create: {
       conversationId: conversation.id,
       direction: "IN",
       text,
-      sentBy: "CUSTOMER", 
+      sentBy: "CUSTOMER",
       externalMessageId: mid ?? null,
     },
   });
@@ -104,11 +97,20 @@ export async function saveInboundMessage(
   return { conversationId: conversation.id, message: msg };
 }
 
-export async function saveOutboundMessage(conversationId: string, text: string, externalMessageId?: string,
+export async function saveOutboundMessage(
+  conversationId: string,
+  text: string,
+  externalMessageId?: string,
   sentBy: MessageSenderType = "AGENT"
 ) {
   const msg = await prisma.message.create({
-    data: { conversationId, direction: "OUT", text,sentBy, externalMessageId: externalMessageId ?? null },
+    data: {
+      conversationId,
+      direction: "OUT",
+      text,
+      sentBy,
+      externalMessageId: externalMessageId ?? null,
+    },
   });
 
   await prisma.conversation.update({
@@ -119,7 +121,11 @@ export async function saveOutboundMessage(conversationId: string, text: string, 
   return msg;
 }
 
-export async function listConversations(params: { q?: string; mineUserId?: number | null; limit?: number }) {
+export async function listConversations(params: {
+  q?: string;
+  mineUserId?: number | null;
+  limit?: number;
+}) {
   const { q, mineUserId, limit = 20 } = params;
   const where: any = q
     ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { externalUserId: { contains: q } }] }
@@ -177,4 +183,3 @@ export async function getUnreadConversationCountForUser(userId: number) {
     },
   });
 }
-

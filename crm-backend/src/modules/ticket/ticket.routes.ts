@@ -7,7 +7,7 @@ import {
   updateTicketHandler,
   assignTicketHandler,
   listTicketNotesHandler,
-  createTicketNoteHandler
+  createTicketNoteHandler,
 } from "./ticket.controller";
 import { authRequired } from "../../middleware/auth";
 

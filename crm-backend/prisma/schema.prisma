@@ -306,3 +306,14 @@ model DealActivity {
   @@index([authorId])
   @@index([activityAt])
 }
+
+model GptConfig {
+  id           Int      @id @default(autoincrement())
+  apiKey       String
+  baseUrl      String   @default("https://api.openai.com/v1")
+  model        String   @default("gpt-4.1-mini")
+  temperature  Float    @default(0.3)
+  systemPrompt String?  
+  updatedAt    DateTime @updatedAt
+}
+
