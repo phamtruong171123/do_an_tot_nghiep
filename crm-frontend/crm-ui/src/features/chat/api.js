@@ -4,7 +4,7 @@ import { apiPost, apiGet, apiPatch } from "../../lib/apiClient";
 export function normalizeThread(raw) {
   const externalId = raw.externalUserId;
 
-  // nếu backend không có tên hoặc trả "Facebook User" thì dùng FB-id
+  // nếu k có tên thì dùng FB-id
   const displayTitle =
     raw.title && raw.title !== "Facebook User"
       ? raw.title
@@ -15,7 +15,8 @@ export function normalizeThread(raw) {
   return {
     id: raw.id,
     title: displayTitle,
-    iconUrl: raw.avatarUrl || null, // null thì FE sẽ dùng ảnh default
+    iconUrl: raw.avatarUrl || null, // ảnh default nếu k có
+     lastActivityAt: raw.lastActivityAt,
     participants: [
       {
         id: externalId,

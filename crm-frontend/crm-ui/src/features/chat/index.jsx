@@ -11,7 +11,7 @@ import { ChatUnreadContext } from "../../contexts/ChatUnReadContext";
 import  {HeaderSearchContext}  from "../../contexts/HeaderSearchContext";
 import { fetchThreads, fetchMessages, sendMessage, markConversationRead ,normalizeMessage} from "./api";
 import { getChatSocket } from "./socket";
-
+import { fetchConversationCustomer } from "./api";
 
 
 
@@ -22,21 +22,61 @@ export default function Chat() {
   const [threads, setThreads] = React.useState([]);
   const [activeThreadId, setActiveThreadId] = React.useState(null);
   const [messages, setMessages] = React.useState([]);
+  const [headerLastActivityAt, setHeaderLastActivityAt] = React.useState(null);
 
   const [loadingThreads, setLoadingThreads] = React.useState(false);
   const [loadingMessages, setLoadingMessages] = React.useState(false);
 
   const [error, setError] = React.useState(null);
+  const [metaByThreadId, setMetaByThreadId] = React.useState({});
 
-  // ====== FETCH backend  ======
+React.useEffect(() => {
+  setHeaderLastActivityAt(null);
+}, [activeThreadId]);
+
+  
+  const upsertMeta = React.useCallback((conversationId, customer) => {
+  if (!conversationId || !customer) return;
+  setMetaByThreadId((prev) => ({
+    ...prev,
+    [conversationId]: {
+      ...(prev[conversationId] || {}),
+      customerId: customer.id,
+      segment: customer.segment,
+      customerName: customer.name,
+    },
+  }));
+}, []);
+
+async function prefetchMeta(threads) {
+  
+  const ids = threads.map((t) => t.id);
+  for (let i = 0; i < ids.length; i += 5) {
+    const chunk = ids.slice(i, i + 5);
+    const results = await Promise.all(
+      chunk.map(async (id) => {
+        try {
+          const { customer } = await fetchConversationCustomer(id);
+          return { id, customer };
+        } catch {
+          return null;
+        }
+      })
+    );
+    results.filter(Boolean).forEach((r) => upsertMeta(r.id, r.customer));
+  }
+}
+
   React.useEffect(() => {
     let cancelled = false;
     async function loadThreads() {
       setLoadingThreads(true);
+      
       try {
         const data = await fetchThreads();
         if (cancelled) return;
         setThreads(data);
+        prefetchMeta(data); 
         if (!activeThreadId && data.length > 0) {
           setActiveThreadId(data[0].id);
         }
@@ -121,9 +161,12 @@ export default function Chat() {
 React.useEffect(() => {
   const socket = getChatSocket();
 
-  const handleNewMessage = ({ conversationId, message }) => {
-    const m = normalizeMessage(message); // 👈 CHUẨN HÓA, có sentBy
-
+  const handleNewMessage = ({ conversationId, message, customerLastActivityAt }) => {
+    if (conversationId === activeThreadId && customerLastActivityAt) {
+    setHeaderLastActivityAt(customerLastActivityAt);
+  }
+    const m = normalizeMessage(message); 
+    
     // 1) Cập nhật ThreadList
     setThreads((prev) => {
       let list = [...prev];
@@ -235,13 +278,14 @@ React.useEffect(() => {
               items={filteredThreads}
               activeId={activeThreadId}
               onSelect={handleSelectThread}
+              metaById={metaByThreadId}
             />
           )
         }
         content={
           activeThread ? (
             <>
-              <ChatHeader thread={activeThread} />
+              <ChatHeader thread={activeThread} injectedLastActivityAt={headerLastActivityAt} />
               {loadingMessages ? (
                 <div style={{ padding: 16 }}>Đang tải tin nhắn…</div>
               ) : (

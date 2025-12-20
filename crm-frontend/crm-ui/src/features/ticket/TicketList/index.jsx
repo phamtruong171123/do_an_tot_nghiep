@@ -24,8 +24,8 @@ export default function TicketList({ items , onEdit}) {
             <th className={cx("colAssignee")}>Assignee</th>
             <th className={cx("colStatus")}>Status</th>
             <th className={cx("colPriority")}>Priority</th>
-            <th className={cx("colEdit")}>Edit</th>
-            <th className={cx("colNotes")}>Notes</th>
+            <th className={cx("colActions")} aria-label="Actions" />
+
         
           </tr>
         </thead>

@@ -1,4 +1,5 @@
 import { PrismaClient, DealStage, Prisma } from "@prisma/client";
+import { promoteSegmentFromDeals, touchCustomerActivity } from "../customer/customerSegment.service";
 
 const prisma = new PrismaClient();
 
@@ -122,7 +123,7 @@ export async function createDeal(data: {
 }) {
   const code = "DE-" + Date.now(); // TODO: generate code đẹp hơn nếu cần
 
-  return prisma.deal.create({
+  const  created = await prisma.deal.create({
     data: {
       code,
       title: data.title,
@@ -134,6 +135,8 @@ export async function createDeal(data: {
       ownerId: data.ownerId,
     },
   });
+  await touchCustomerActivity(prisma, data.customerId,  { reviveIfDropped: false });
+  return created;
 }
 
 /**
@@ -233,10 +236,14 @@ export async function updateDealWithActivity(id: string, payload: any, userId: n
       amount: payload.amount,
       currency: payload.currency,
       stage: payload.stage as DealStage,
-      // ... các field bạn cho phép sửa
     },
   });
 
+  await touchCustomerActivity(prisma, updated.customerId,  { reviveIfDropped: false });
+
+  if(payload.stage && payload.stage !== old.stage && payload.stage === DealStage.CONTRACT){
+    await promoteSegmentFromDeals(prisma, updated.customerId);
+  }
   // Nếu stage thay đổi → tạo activity
   if (payload.stage && payload.stage !== old.stage) {
     await prisma.dealActivity.create({

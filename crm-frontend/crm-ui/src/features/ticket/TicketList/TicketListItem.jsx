@@ -3,6 +3,7 @@ import classNames from "classnames/bind";
 import styles from "./TicketList.module.scss";
 import Tippy from "@tippyjs/react";
 import "tippy.js/dist/tippy.css";
+import SegmentPill from "../../../components/SegmentPill";  
 
 import { fetchTicketNotes, createTicketNote, getNotesCount } from "../api";
 import { useToast } from "../../../components/Toast";
@@ -14,6 +15,7 @@ export default function TicketListItem({ item, onEdit }) {
     code,
     subject,
     customerName,
+    customerSegment,
     dueAt,
     isOverdue,
     assigneeName,
@@ -90,8 +92,13 @@ export default function TicketListItem({ item, onEdit }) {
       <td className={cx("subject")}>
         <div className={cx("subjectMain")}>{subject}</div>
         {customerName && (
-          <div className={cx("subjectSub")}>{customerName}</div>
-        )}
+  <div className={cx("subjectSub")}>
+          {customerName}
+          <span style={{ marginLeft: 8 }}>
+            <SegmentPill value={customerSegment} size="sm" />
+          </span>
+        </div>
+      )}
       </td>
       <td className={cx("assignee")}>{assigneeName || "-"}</td>
       <td className={cx("status")}>
@@ -102,119 +109,111 @@ export default function TicketListItem({ item, onEdit }) {
           {priority}
         </span>
       </td>
-      <td className={cx("edit")}>
-        <i
-          className="fa-solid fa-pen-to-square"
-          aria-hidden="true"
-          onClick={handleEdit}
-        />
-      </td>
-
-      {/* Cột Notes */}
-      <td
-        className={cx("colNotes")}
-        onClick={(e) => e.stopPropagation()} // tránh trigger row
-      >
-        <Tippy
-          visible={notesOpen}
-          onClickOutside={() => setNotesOpen(false)}
-          className={cx("noteTippy")}
-          interactive
-          maxWidth={420}
-          placement="bottom"
-          offset={[0, 8]}
-          content={
-            <div className={cx("notesPopup")}>
-              <div className={cx("popupHeader")}>
-                <span className={cx("popupTitle")}>
-                  Notes for {code}
-                </span>
-                <button
-                  type="button"
-                  className={cx("popupClose")}
-                  onClick={() => setNotesOpen(false)}
-                >
-                  ×
-                </button>
-              </div>
-
-              <div className={cx("popupBody")}>
-                {loadingNotes && (
-                  <div className={cx("notesEmpty")}>Đang tải…</div>
-                )}
-
-                {!loadingNotes &&
-                  notes &&
-                  notes.length === 0 && (
-                    <div className={cx("notesEmpty")}>
-                      Chưa có ghi chú nào.
-                    </div>
-                  )}
-
-                {!loadingNotes && notes && notes.length > 0 && (
-                  <div className={cx("notesList")}>
-                    {notes.map((n) => (
-                      <div key={n.id} className={cx("noteItem")}>
-                        <div className={cx("noteMeta")}>
-                          <span className={cx("noteAuthor")}>
-                            
-                            {n.authorName ||
-                              (n.authorId
-                                ? `User #${n.authorId}`
-                                : "N/A")}
-                          </span>
-                          <span className={cx("noteTime")}>
-                            {new Date(n.createdAt).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className={cx("noteText")}>{n.content}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <form className={cx("popupComposer")} onSubmit={handleAddNote}>
-                <textarea
-                  rows={3}
-                  className={cx("popupTextarea")}
-                  placeholder="Thêm ghi chú cho ticket…"
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                />
-                <div className={cx("composerFooter")}>
-                  <button
-                    type="submit"
-                    className={cx("saveBtn")}
-                    disabled={adding || !noteText.trim()}
-                  >
-                    {adding ? "Đang lưu..." : "Lưu note"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          }
-        >
+            {/* Actions (Edit + Notes) */}
+      <td className={cx("colActions")} onClick={(e) => e.stopPropagation()}>
+        <div className={cx("actionsWrap")}>
           <button
             type="button"
-            className={cx("notesTrigger")}
-            title="Ghi chú ticket"
-            onClick={async (e) => {
+            className={cx("actionBtn")}
+            title="Sửa ticket"
+            onClick={(e) => {
               e.stopPropagation();
-              const next = !notesOpen;
-              setNotesOpen(next);
-              if (next) {
-                await ensureNotesLoaded();
-              }
+              handleEdit();
             }}
           >
-           <i class="fa-regular fa-note-sticky"></i>
-           {/*  {notesCount > 0 && (
-              <span className={cx("notesBadge")}>{notesCount}</span>
-            )} */}
+            <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
           </button>
-        </Tippy>
+
+          <Tippy
+            visible={notesOpen}
+            onClickOutside={() => setNotesOpen(false)}
+            className={cx("noteTippy")}
+            interactive
+            maxWidth={420}
+            placement="bottom"
+            offset={[0, 8]}
+            content={
+              <div className={cx("notesPopup")}>
+                <div className={cx("popupHeader")}>
+                  <span className={cx("popupTitle")}>Notes for {code}</span>
+                  <button
+                    type="button"
+                    className={cx("popupClose")}
+                    onClick={() => setNotesOpen(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className={cx("popupBody")}>
+                  {loadingNotes && <div className={cx("notesEmpty")}>Đang tải…</div>}
+
+                  {!loadingNotes && notes && notes.length === 0 && (
+                    <div className={cx("notesEmpty")}>Chưa có ghi chú nào.</div>
+                  )}
+
+                  {!loadingNotes && notes && notes.length > 0 && (
+                    <div className={cx("notesList")}>
+                      {notes.map((n) => (
+                        <div key={n.id} className={cx("noteItem")}>
+                          <div className={cx("noteMeta")}>
+                            <span className={cx("noteAuthor")}>
+                              {n.authorName ||
+                                (n.authorId ? `User #${n.authorId}` : "N/A")}
+                            </span>
+                            <span className={cx("noteTime")}>
+                              {new Date(n.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className={cx("noteText")}>{n.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <form className={cx("popupComposer")} onSubmit={handleAddNote}>
+                  <textarea
+                    rows={3}
+                    className={cx("popupTextarea")}
+                    placeholder="Thêm ghi chú cho ticket…"
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                  />
+                  <div className={cx("composerFooter")}>
+                    <button
+                      type="submit"
+                      className={cx("saveBtn")}
+                      disabled={adding || !noteText.trim()}
+                    >
+                      {adding ? "Đang lưu..." : "Lưu note"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            }
+          >
+            <button
+              type="button"
+              className={cx("actionBtn", "notesTrigger")}
+              title="Ghi chú ticket"
+              onClick={async (e) => {
+                e.stopPropagation();
+                const next = !notesOpen;
+                setNotesOpen(next);
+                if (next) await ensureNotesLoaded();
+              }}
+            >
+              <i className="fa-regular fa-note-sticky" aria-hidden="true" />
+              {/* Nếu muốn hiện badge thì bật lại */}
+              {/* {notesCount > 0 && (
+                <span className={cx("notesBadge")}>{notesCount}</span>
+              )} */}
+            </button>
+          </Tippy>
+        </div>
       </td>
+
     </tr>
   );
 }

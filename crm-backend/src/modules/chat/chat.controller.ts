@@ -160,6 +160,9 @@ export async function getConversationCustomerHandler(req: Request, res: Response
       address: customer.address,
       segment: customer.segment,
       note: customer.note,
+      lastActivityAt: customer.lastActivityAt,
+      createdAt: customer.createdAt,
+      updatedAt: customer.updatedAt,
     },
     latestDealId: latestDeal?.id ?? null,
     latestDeal: latestDeal

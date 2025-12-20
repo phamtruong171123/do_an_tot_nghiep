@@ -1,17 +1,18 @@
 import { apiGet, apiPost, apiPatch } from "../../lib/apiClient";
 
-// Map dữ liệu BE → FE cho list ticket
+// Map dữ liệu 
 export function normalizeTicketSummary(raw) {
   const customerName = raw.customer?.name || "";
   const assigneeName =
     raw.assignee?.name || raw.assignee?.username || "";
   const notesCount= typeof raw.notesCount === "number" ? raw.notesCount : 0;
-   
+   const customerSegment = raw.customer?.segment || "POTENTIAL";
   return {
     id: raw.id,
     code: raw.code,
     subject: raw.subject,
     customerName,
+    customerSegment,
     dueAt: raw.dueAt || null,
     isOverdue: !!raw.isOverdue,
     assigneeId: raw.assigneeId ?? null,

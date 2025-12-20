@@ -93,6 +93,7 @@ model Customer {
 
   segment CustomerSegment @default(POTENTIAL)
 
+  lastActivityAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

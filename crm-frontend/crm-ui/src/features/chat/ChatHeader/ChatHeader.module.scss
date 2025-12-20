@@ -13,7 +13,27 @@
 .left { display:flex; gap:12px; align-items:center; }
 .avatar { width:36px; height:36px; border-radius:50%; object-fit:cover; }
 .title { font-weight:600; }
-.status { font-size:12px; color:#10b981; display:flex; align-items:center; gap:6px; }
-.dot { width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block; }
+.status { 
+  font-size: 12px; 
+  color: #6b7280;             
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+}
+
+.statusOnline { color: #10b981; }   /*  online */
+.statusOffline { color: #6b7280; }  /*  offline */
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.dotOnline { background: #22c55e; }
+.dotOffline { background: #9ca3af; }
+
 .right { display:flex; gap:8px; }
 .btn { background:transparent; border:1px solid #e5e7eb; padding:6px 6px; cursor:pointer; }

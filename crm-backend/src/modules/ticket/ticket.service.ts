@@ -1,4 +1,5 @@
 import { PrismaClient, TicketPriority, TicketStatus } from "@prisma/client";
+import { touchCustomerActivity } from "../customer/customerSegment.service";
 
 const prisma = new PrismaClient();
 
@@ -82,6 +83,11 @@ export async function createTicket(input: CreateTicketInput) {
       createdById,
     },
   });
+
+  if(ticket.customerId){
+    // Touch customer activity khi tạo ticket mới
+    await touchCustomerActivity(prisma, ticket.customerId);
+  }
 
   return ticket;
 }
@@ -183,6 +189,10 @@ export async function updateTicket(id: string, input: UpdateTicketInput) {
       customer: { select: { id: true, name: true, avatarUrl: true } },
     },
   });
+  if(updated.customerId){
+    // Touch customer activity khi cập nhật ticket
+    await touchCustomerActivity(prisma, updated.customerId);
+  }
 
   return updated;
 }

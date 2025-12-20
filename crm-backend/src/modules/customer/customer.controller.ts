@@ -36,6 +36,7 @@ export async function listCustomersHandler(req: Request, res: Response) {
         email: true,
         segment: true,
         address: true,
+        lastActivityAt:true,
         createdAt: true,
         updatedAt: true,
         conversation: {

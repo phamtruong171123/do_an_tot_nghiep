@@ -1,6 +1,8 @@
 import { PrismaClient, MessageSenderType } from "@prisma/client";
 import { fetchFacebookUserProfile } from "../facebook/facebook.service";
 import { findOrCreateCustomerByExternalId } from "../customer/customer.service";
+import { touchCustomerActivity } from "../customer/customerSegment.service";
+
 const prisma = new PrismaClient();
 
 // Tìm hoặc tạo Conversation dựa trên pageId và externalUserId (PSID).
@@ -94,6 +96,11 @@ export async function saveInboundMessage(
     },
   });
 
+  if(conversation.customerId){
+    // Touch customer activity khi có tin nhắn mới từ khách
+    await touchCustomerActivity(prisma, conversation.customerId);
+  }
+
   return { conversationId: conversation.id, message: msg };
 }
 
@@ -118,8 +125,19 @@ export async function saveOutboundMessage(
     data: { lastMessageAt: msg.createdAt, lastMessageText: text },
   });
 
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    select: { customerId: true },
+  });
+  if (conversation?.customerId) {
+    // tránh việc agent nhắn tin làm khách trở lại từ DROPPED
+    await touchCustomerActivity(prisma, conversation.customerId, { reviveIfDropped: false });
+  }
+
   return msg;
 }
+
+
 
 export async function listConversations(params: {
   q?: string;

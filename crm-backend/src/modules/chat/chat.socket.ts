@@ -1,4 +1,6 @@
 import { Server } from "socket.io";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 let io: Server | null = null;
 
@@ -21,10 +23,17 @@ export function initChatSocket(server: any) {
   });
 }
 
-export function broadcastMessage(conversationId: string, message: any) {
+export async function broadcastMessage(conversationId: string, message: any) {
   if (!io) return;
 
-  const payload = { conversationId, message };
+  const conversation =  await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: { customer: true },
+  });
+
+  const payload = { conversationId, message, 
+    customerId: conversation?.customerId ?? null,
+    customerLastActivityAt: new Date().toISOString(),}; // gửi last activity mới nhất của customer
 
   //  Gửi cho TẤT CẢ client – để ThreadList & unread cập nhật, kể cả khi không mở thread đó
   io.emit("message:new", payload);

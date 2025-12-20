@@ -41,6 +41,54 @@ tbody tr + tr {
   width: 110px;
 }
 
+.colEdit {
+  width: 60px;
+  text-align: right;
+}
+
+
+.edit {
+  text-align: right;
+  color: #6b7280;
+  cursor: pointer;
+}
+
+/* Cột Notes */
+.colNotes {
+  width: 90px;
+  text-align: right; 
+  vertical-align: middle;
+}
+
+.colActions {
+  width: 110px;     /* chỉnh 90-130 tùy bạn */
+  text-align: right;
+}
+
+.actionsWrap {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+}
+
+.actionBtn:hover {
+  background: #f3f4f6;
+}
+
+
 .code {
   color: #6b7280;
 }
