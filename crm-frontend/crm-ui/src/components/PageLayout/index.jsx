@@ -10,7 +10,7 @@ export default function PageLayout({ title, subtitle, actions, children }) {
           {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
         </div>
 
-        {/* các nút bên phải như + Add Deal */}
+       
         <div className={styles.actions}>{actions}</div>
       </div>
 

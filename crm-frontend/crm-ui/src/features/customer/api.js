@@ -72,3 +72,15 @@ export async function createCustomer(payload) {
   return res; 
 }
 
+
+export async function searchCustomers(q) {
+  const params = new URLSearchParams();
+  if (q && q.trim()) params.set("q", q.trim());
+  const res = await apiGet(`/api/customers/search?${params.toString()}`);
+  const rawItems = Array.isArray(res.items) ? res.items : res;
+  const items = rawItems.map(normalizeCustomer);
+  return items;
+}
+
+
+

@@ -1,0 +1,56 @@
+.root { position: relative; width: 100%; }
+
+.control {
+  display: flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  height: 40px; 
+}
+
+.input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+}
+
+.right { margin-left: 8px; display: flex; align-items: center; gap: 6px; }
+.spinner { font-size: 12px; opacity: 0.7; }
+.chev { font-size: 12px; opacity: 0.7; }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.08);
+  max-height: 280px;
+  overflow: auto;
+  z-index: 50;
+}
+
+.option {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.option:hover { background: #f3f4f6; }
+
+.optTitle { font-size: 14px; font-weight: 600; }
+.optSub { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+.empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  opacity: .7;
+}

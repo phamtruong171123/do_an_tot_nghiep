@@ -313,3 +313,50 @@ export async function updateCustomerHandler(req: Request, res: Response) {
     return res.status(500).json({ error: "Failed to update customer" });
   }
 }
+
+export async function searchCustomers(req: Request, res: Response) {
+  const qRaw = String(req.query.q || "").trim();
+  const limit = Math.min(Number(req.query.limit || 100), 100);
+
+  if (!qRaw) return res.json({ items: [] });
+
+  const digits = qRaw.replace(/[^\d]/g, ""); 
+
+
+  const compact = qRaw.replace(/\s/g, "");
+  const digitRatio = compact.length > 0 ? digits.length / compact.length : 0;
+  const isPhoneSearch = digits.length >= 3 && digitRatio >= 0.6; // có >3 số thì coi là tìm số điện thoại
+
+  const where = isPhoneSearch
+    ? {
+        OR: [
+      
+          { phoneNumber: { contains: digits } },
+    
+          { phoneNumber: { contains: qRaw } },
+        ],
+      }
+    : {
+        name: { contains: qRaw,},
+      };
+
+  const items = await prisma.customer.findMany({
+    where,
+    take: limit,
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      phoneNumber: true,
+      email: true,
+      segment: true,
+    },
+  });
+
+  return res.json({
+    items,
+    mode: isPhoneSearch ? "PHONE" : "NAME", 
+  });
+}
+
+

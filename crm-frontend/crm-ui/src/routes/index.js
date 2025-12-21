@@ -16,6 +16,7 @@ import DealPage from '../features/deal/DealPage';
 import DealDetailPage from '../features/deal/DealDetailPage';
 import SettingsPage from "../features/settings";
 import GptConfigPage from "../features/gpt-config/GptConfigPage";
+
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
   catch { return null; }
@@ -25,7 +26,7 @@ function getDefaultPath(me) {
   if (!me) return "/login";
   return me.role === "ADMIN"
     ? "/app/admin/dashboard"
-    : "/app/agent/chat"; // hoặc dashboard
+    : "/app/agent/chat"; 
 }
 
 function RequireAuthOutlet() {
@@ -87,7 +88,6 @@ export default function AppRoutes() {
           <Route path="settings" element={<SettingsPage me={me} />} />
           <Route path="faq"       element={<FaqPage currentUser={me} />} />
           <Route path="settings/gpt-config" element={<GptConfigPage/>} />
-          {/* User management chỉ nằm trong admin, không có /users tự do nữa */}
           <Route path="users"     element={<UserManagement />} />
         </Route>
 

@@ -23,10 +23,10 @@ export default function DealPage() {
 
 
   const [search, setSearch] = React.useState("");
-  const [sortBy, setSortBy] = React.useState("createdAt"); // createdAt | amount | appointmentAt
+  const [sortBy, setSortBy] = React.useState("createdAt");
   const [sortOrder, setSortOrder] = React.useState("desc"); // asc | desc
 
-  const debouncedSearch = useDebouncedValue(search, 400); // gọi be khi user ngừng gõ 400ms
+  const debouncedSearch = useDebouncedValue(search, 400); 
   const { pushToast } = useToast?.() || { pushToast: () => {} };
 
   // load data mỗi khi page / search / sort thay đổi
@@ -38,12 +38,10 @@ export default function DealPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const offset = (page - 1) * PAGE_SIZE;
-
-      const { items, total } = await fetchDeals({
-        limit: PAGE_SIZE,
-        offset,
-        search: debouncedSearch  || undefined,
+     const { items, total } = await fetchDeals({
+        page,
+        pageSize: PAGE_SIZE,
+        search: debouncedSearch || undefined,
         sortBy,
         sortOrder,
       });
@@ -85,12 +83,14 @@ export default function DealPage() {
             className={styles.primaryBtn}
             onClick={() => setShowCreate(true)}
           >
-            + Add New Deal
+            + Add New 
           </button>
+
+          
         </div>
   
         <div className={styles.card}>
-          {/* 🔍 Thanh toolbar: search + sort */}
+        
           <div className={styles.toolbar}>
             <input
               className={styles.searchInput}
@@ -128,7 +128,7 @@ export default function DealPage() {
                   <th>Customer</th>
                   <th>Stage</th>
                   <th>Appointment</th>
-                  <th>Amount</th>
+                  <th>Paid Amount</th>
                 </tr>
               </thead>
               <tbody>
@@ -153,9 +153,9 @@ export default function DealPage() {
                     </td>
                     <td>{formatDate(d.appointmentAt)}</td>
                     <td className={styles.cellAmount}>
-                      {d.amount != null
-                        ? d.amount.toLocaleString("vi-VN")
-                        : "-"}
+                      {d.paidAmount != null
+                        ? d.paidAmount.toLocaleString("en-US")
+                        : "-"} Not Paid
                     </td>
                   </tr>
                 ))}

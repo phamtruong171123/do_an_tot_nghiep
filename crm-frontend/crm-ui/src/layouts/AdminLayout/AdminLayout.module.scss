@@ -32,7 +32,9 @@
 
 .content {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;     /* QUAN TRỌNG: không cuộn ở đây nữa */
-  padding: 0;           /* để page (Chat, FAQ...) tự lo padding */
+  min-height: 0;     
+  overflow: hidden;   
+  display: flex;    
+  flex-direction: column;
 }
+

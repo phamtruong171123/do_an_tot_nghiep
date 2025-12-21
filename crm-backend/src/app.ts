@@ -13,6 +13,7 @@ import aiSuggestionRoutes from "./modules/ai/aiSuggestion.routes";
 import dealRoutes from "./modules/deal/deal.routes";
 import gptConfigRoutes from "./modules/gptConfig/gptConfig.routes";
 import { getRecentDealsOfCustomer } from "./modules/deal/deal.controller";
+import { authRequired } from "./middleware/auth";
 
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
@@ -33,7 +34,7 @@ app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/health", (_req, res) => res.json({ status: "ok", time: new Date().toISOString() }));
-app.get("/api/customers/:customerId/recent-deals", getRecentDealsOfCustomer);
+app.get("/api/customers/:customerId/recent-deals", authRequired, getRecentDealsOfCustomer);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

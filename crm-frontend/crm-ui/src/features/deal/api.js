@@ -13,6 +13,11 @@ export function normalizeDealSummary(raw) {
     ownerName: raw.owner?.fullName || raw.owner?.username || "",
     createdAt: raw.createdAt,
     appointmentAt: raw.appointmentAt,
+
+    unitPrice: raw.unitPrice ?? null,
+    quantity: raw.quantity ?? null,
+    paidAmount: raw.paidAmount ?? null,
+    costNote: raw.costNote ?? "",
   };
 }
 
@@ -56,17 +61,28 @@ export async function createDeal(form) {
     title: form.title?.trim() || "",
   };
 
+  
   if (form.amount !== "" && form.amount !== undefined && form.amount !== null) {
     payload.amount = Number(form.amount);
   }
 
-  if (form.appointmentAt) {
-    payload.appointmentAt = form.appointmentAt;
+ 
+  if (form.quantity !== "" && form.quantity !== undefined && form.quantity !== null) {
+    payload.quantity = form.quantity; 
   }
+  if (form.unitPrice !== "" && form.unitPrice !== undefined && form.unitPrice !== null) {
+    payload.unitPrice = form.unitPrice;
+  }
+  if (form.paidAmount !== "" && form.paidAmount !== undefined && form.paidAmount !== null) {
+    payload.paidAmount = form.paidAmount;
+  }
+
+  if (form.appointmentAt) payload.appointmentAt = form.appointmentAt;
 
   const res = await apiPost("/api/deals", payload);
   return normalizeDealSummary(res);
 }
+
 
 // PATCH /api/deals/:id  (nếu sau này cần chỉnh stage, amount,...)
 export async function updateDeal(id, patch) {
@@ -98,4 +114,17 @@ export async function fetchRecentDealsForCustomer(customerId, limit = 5) {
     offset: 0,
   });
   return items;
+}
+
+//approve/reject contract
+export async function requestContractApproval(id) {
+  return apiPost(`/api/deals/${id}/request-contract-approval`, {});
+}
+
+export async function approveContract(id) {
+  return apiPost(`/api/deals/${id}/approve-contract`, {});
+}
+
+export async function rejectContract(id, reason) {
+  return apiPost(`/api/deals/${id}/reject-contract`, { reason });
 }

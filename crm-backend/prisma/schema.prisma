@@ -259,6 +259,7 @@ enum DealStage {
   POTENTIAL // Tiềm năng
   CONTACTED // Đã liên hệ
   NEGOTIATION // Thương thảo
+  PENDING_CONTRACT_APPROVAL
   CONTRACT // Ký hợp đồng thành công
   LOST // Thất bại
 }
@@ -268,6 +269,17 @@ model Deal {
   code        String  @unique // ví dụ: DE-2025-0001
   title       String
   description String?
+
+  unitPrice   Decimal? @db.Decimal(18,2)
+  quantity    Decimal? @db.Decimal(18,2)
+  paidAmount  Decimal? @db.Decimal(18,2)
+  costNote    String?  @db.VarChar(2000)
+
+  approvalRequestedAt   DateTime?
+  approvalRequestedById Int?
+  approvalReviewedAt    DateTime?
+  approvalReviewedById  Int?
+  approvalRejectReason  String?  @db.VarChar(500)
 
   stage    DealStage @default(POTENTIAL)
   amount   Float?

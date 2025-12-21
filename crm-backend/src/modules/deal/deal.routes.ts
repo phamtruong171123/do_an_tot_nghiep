@@ -1,6 +1,6 @@
 import { Router } from "express";
 import * as dealController from "./deal.controller";
-import { authRequired } from "../../middleware/auth";
+import { authRequired,adminOnly } from "../../middleware/auth";
 
 const router = Router();
 
@@ -23,5 +23,10 @@ router.get("/:id/activities", authRequired, dealController.getDealActivities);
 
 // POST /api/deals/:id/activities
 router.post("/:id/activities", authRequired, dealController.postDealActivity);
+
+// Contract approval flow
+router.post("/:id/request-contract-approval", authRequired, dealController.requestContractApproval);
+router.post("/:id/approve-contract", authRequired, adminOnly, dealController.approveContract);
+router.post("/:id/reject-contract", authRequired, adminOnly, dealController.rejectContract);
 
 export default router;

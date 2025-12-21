@@ -1,6 +1,27 @@
 import { PrismaClient, DealStage, Prisma } from "@prisma/client";
 import { promoteSegmentFromDeals, touchCustomerActivity } from "../customer/customerSegment.service";
 
+export type UserCtx = { id: number; role: "ADMIN" | "AGENT"};
+function httpError(statusCode: number, message: string) {
+  const e: any = new Error(message);
+  e.statusCode = statusCode;
+  return e;
+}
+
+function toDecimal(v: any): Prisma.Decimal | null {
+  if (v === null || v === undefined || v === "") return null;
+  try {
+    return new Prisma.Decimal(v);
+  } catch {
+    throw httpError(400, "Invalid decimal value");
+  }
+}
+
+function isLockedStage(stage: DealStage) {
+  return stage === "PENDING_CONTRACT_APPROVAL" || stage === "CONTRACT";
+}
+
+
 const prisma = new PrismaClient();
 
 /**
@@ -13,6 +34,8 @@ export async function listDeals(params: {
   search?: string;
   sortBy?: "createdAt" | "amount" | "appointmentAt";
   sortOrder?: "asc" | "desc";
+  stage?: string;
+  user: UserCtx;
 }) {
   const {
     customerId,
@@ -24,6 +47,8 @@ export async function listDeals(params: {
   } = params;
 
   const where: Prisma.DealWhereInput = {};
+  if (params.user.role !== "ADMIN") where.ownerId = params.user.id;
+  if (params.stage) where.stage = params.stage as DealStage;
 
   if (typeof customerId === "number") {
     where.customerId = customerId;
@@ -108,6 +133,14 @@ export async function getDeal(id: string) {
     },
   });
 }
+
+export async function getDealForUser(id: string, user: UserCtx) {
+  const deal = await getDeal(id);
+  if (!deal) return null;
+  if (user.role !== "ADMIN" && deal.ownerId !== user.id) return null;
+  return deal;
+}
+
 
 /**
  * Tạo deal mới
@@ -202,9 +235,9 @@ export async function listDealActivities(dealId: string, limit = 20) {
 /**
  * Recent deals cho 1 customer
  */
-export async function listRecentDealsForCustomer(customerId: number, limit = 5) {
+export async function listRecentDealsForCustomer(customerId: number, limit = 5, ownerId?: number) {
   return prisma.deal.findMany({
-    where: { customerId },
+    where: { customerId, ...(ownerId !== undefined ? { ownerId } : {}) },
     orderBy: { createdAt: "desc" },
     take: limit,
     select: {
@@ -219,15 +252,28 @@ export async function listRecentDealsForCustomer(customerId: number, limit = 5) 
   });
 }
 
-export async function updateDealWithActivity(id: string, payload: any, userId: number) {
-  // Lấy deal cũ để biết stage trước đó
+export async function updateDealWithActivity(id: string, payload: any, user: UserCtx) {
   const old = await prisma.deal.findUnique({
     where: { id },
-    select: { stage: true },
+    select: { stage: true, ownerId: true },
   });
-  if (!old) throw new Error("Deal not found");
+  if (!old) throw httpError(404, "Deal not found");
 
-  // Update deal
+  // agent chỉ sửa deal của mình
+  if (user.role !== "ADMIN" && old.ownerId !== user.id) {
+    throw httpError(403, "Forbidden");
+  }
+
+  // khóa khi pending/contract
+  if (isLockedStage(old.stage)) {
+    throw httpError(409, "Deal is locked");
+  }
+
+  // không cho tự set pending/contract bằng PATCH
+  if (payload?.stage === "PENDING_CONTRACT_APPROVAL" || payload?.stage === "CONTRACT") {
+    throw httpError(400, "Use approval endpoints to move to pending/contract");
+  }
+
   const updated = await prisma.deal.update({
     where: { id },
     data: {
@@ -236,20 +282,19 @@ export async function updateDealWithActivity(id: string, payload: any, userId: n
       amount: payload.amount,
       currency: payload.currency,
       stage: payload.stage as DealStage,
+
+      unitPrice: payload.unitPrice !== undefined ? toDecimal(payload.unitPrice) : undefined,
+      quantity: payload.quantity !== undefined ? toDecimal(payload.quantity) : undefined,
+      paidAmount: payload.paidAmount !== undefined ? toDecimal(payload.paidAmount) : undefined,
+      costNote: payload.costNote !== undefined ? String(payload.costNote) : undefined,
     },
   });
 
-  await touchCustomerActivity(prisma, updated.customerId,  { reviveIfDropped: false });
-
-  if(payload.stage && payload.stage !== old.stage && payload.stage === DealStage.CONTRACT){
-    await promoteSegmentFromDeals(prisma, updated.customerId);
-  }
-  // Nếu stage thay đổi → tạo activity
   if (payload.stage && payload.stage !== old.stage) {
     await prisma.dealActivity.create({
       data: {
         dealId: id,
-        authorId: userId,
+        authorId: user.id,
         content: `Stage changed from ${old.stage} to ${payload.stage}`,
         activityAt: new Date(),
       },
@@ -258,3 +303,85 @@ export async function updateDealWithActivity(id: string, payload: any, userId: n
 
   return updated;
 }
+
+
+export async function requestContractApproval(dealId: string, user: UserCtx) {
+  const deal = await prisma.deal.findUnique({
+    where: { id: dealId },
+    select: {
+      id: true,
+      stage: true,
+      ownerId: true,
+      unitPrice: true,
+      quantity: true,
+      paidAmount: true,
+      costNote: true,
+    },
+  });
+  if (!deal) throw httpError(404, "Deal not found");
+
+  if (user.role !== "ADMIN" && deal.ownerId !== user.id) throw httpError(403, "Forbidden");
+  if (isLockedStage(deal.stage)) throw httpError(409, "Deal is locked");
+
+  const unitPrice = deal.unitPrice ? new Prisma.Decimal(deal.unitPrice as any) : null;
+  const quantity = deal.quantity ? new Prisma.Decimal(deal.quantity as any) : null;
+  const paidAmount = deal.paidAmount ? new Prisma.Decimal(deal.paidAmount as any) : null;
+  const costNote = String(deal.costNote || "").trim();
+
+  if (!unitPrice || unitPrice.lte(0)) throw httpError(400, "Unit price is required");
+  if (!quantity || quantity.lte(0)) throw httpError(400, "Quantity is required");
+  if (!costNote) throw httpError(400, "Cost explanation is required");
+  if (!paidAmount || paidAmount.lte(0)) throw httpError(400, "Paid amount is required");
+
+  const goodsAmount = unitPrice.mul(quantity);
+
+ 
+  if (paidAmount.lt(goodsAmount)) {
+    throw httpError(400, "Paid amount must be greater than or equal to goods amount");
+  }
+
+  return prisma.deal.update({
+    where: { id: dealId },
+    data: {
+      stage: "PENDING_CONTRACT_APPROVAL",
+      approvalRequestedAt: new Date(),
+      approvalRequestedById: user.id,
+      approvalRejectReason: null,
+    },
+  });
+}
+
+export async function approveContract(dealId: string, adminId: number) {
+  const deal = await prisma.deal.findUnique({ where: { id: dealId }, select: { stage: true } });
+  if (!deal) throw httpError(404, "Deal not found");
+  if (deal.stage !== "PENDING_CONTRACT_APPROVAL") throw httpError(409, "Deal is not pending approval");
+
+  return prisma.deal.update({
+    where: { id: dealId },
+    data: {
+      stage: "CONTRACT",
+      approvalReviewedAt: new Date(),
+      approvalReviewedById: adminId,
+    },
+  });
+}
+
+export async function rejectContract(dealId: string, adminId: number, reason: string) {
+  const r = String(reason || "").trim();
+  if (!r) throw httpError(400, "Reject reason is required");
+
+  const deal = await prisma.deal.findUnique({ where: { id: dealId }, select: { stage: true } });
+  if (!deal) throw httpError(404, "Deal not found");
+  if (deal.stage !== "PENDING_CONTRACT_APPROVAL") throw httpError(409, "Deal is not pending approval");
+
+  return prisma.deal.update({
+    where: { id: dealId },
+    data: {
+      stage: "NEGOTIATION",
+      approvalReviewedAt: new Date(),
+      approvalReviewedById: adminId,
+      approvalRejectReason: r,
+    },
+  });
+}
+

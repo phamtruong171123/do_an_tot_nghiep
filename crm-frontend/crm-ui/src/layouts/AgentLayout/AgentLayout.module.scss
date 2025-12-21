@@ -2,8 +2,8 @@
 
 .layout {
   display: flex;
-  height: 100vh;        /* dùng height, không dùng min-height */
-  overflow: hidden;     /* KHÔNG cho trang cuộn ở đây */
+  height: 100vh;       
+  overflow: hidden;     
   background: #f7f9fc;
 }
 
@@ -20,7 +20,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;        /* cho phép con flex và cuộn */
+  min-height: 0;     
 }
 
 .header-wrap {
@@ -32,7 +32,9 @@
 
 .content {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;     /* QUAN TRỌNG: không cuộn ở đây nữa */
-  padding: 0;           /* để page (Chat, FAQ...) tự lo padding */
+  min-height: 0;     
+  overflow: hidden;  
+  display: flex;     
+  flex-direction: column;
 }
+
