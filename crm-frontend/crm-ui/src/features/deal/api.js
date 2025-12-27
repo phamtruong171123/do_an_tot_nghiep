@@ -21,36 +21,69 @@ export function normalizeDealSummary(raw) {
   };
 }
 
-// GET /api/deals?limit=&offset=&customerId=
-export async function fetchDeals({
-  page = 1,
-  pageSize = 20,
-  search,
-  sortBy,
-  sortOrder,
-  customerId,
-} = {}) {
-  const params = new URLSearchParams();
+// GET /api/deals?customerId=&page=&pageSize=&search=&sortBy=&sortOrder=&stage=
+export async function fetchDeals(opts = {}) {
+  const {
+    page,
+    pageSize,
+    // backward-compatible (nếu chỗ khác lỡ truyền limit/offset)
+    limit,
+    offset,
+    search,
+    sortBy,
+    sortOrder,
+    customerId,
+    stage,
+  } = opts;
 
-  params.set("page", String(page));
-  params.set("pageSize", String(pageSize));
+  const effectivePageSize =
+    typeof pageSize === "number"
+      ? pageSize
+      : typeof limit === "number"
+        ? limit
+        : 20;
+
+  let effectivePage = typeof page === "number" ? page : 1;
+
+  if (
+    typeof page !== "number" &&
+    typeof offset === "number" &&
+    typeof limit === "number" &&
+    limit > 0
+  ) {
+    effectivePage = Math.floor(offset / limit) + 1;
+  }
+
+  const params = new URLSearchParams();
+  params.set("page", String(effectivePage));
+  params.set("pageSize", String(effectivePageSize));
 
   if (customerId != null) params.set("customerId", String(customerId));
+  if (stage) params.set("stage", stage);
   if (search) params.set("search", search);
   if (sortBy) params.set("sortBy", sortBy);
   if (sortOrder) params.set("sortOrder", sortOrder);
 
   const url = `/api/deals?${params.toString()}`;
-
-
   const res = await apiGet(url);
- 
- return {
-    
-    items: res.items.map(normalizeDealSummary),
-    total: res.items.length,
+
+  const rawItems = Array.isArray(res?.items) ? res.items : [];
+
+  const total =
+    typeof res?.total === "number"
+      ? res.total
+      : typeof res?.count === "number"
+        ? res.count
+        : rawItems.length;
+
+  return {
+    items: rawItems.map(normalizeDealSummary),
+    total,
+    page: typeof res?.page === "number" ? res.page : effectivePage,
+    pageSize: typeof res?.pageSize === "number" ? res.pageSize : effectivePageSize,
   };
 }
+
 
 
 
@@ -106,15 +139,18 @@ export async function createDealActivity(dealId, { content, activityAt }) {
   return apiPost(`/api/deals/${dealId}/activities`, payload);
 }
 
-// Recent deals cho 1 customer – dùng cho CustomerDetail
+// Recent deals cho 1 customer
 export async function fetchRecentDealsForCustomer(customerId, limit = 5) {
   const { items } = await fetchDeals({
     customerId,
-    limit,
-    offset: 0,
+    page: 1,
+    pageSize: limit,
+    sortBy: "createdAt",
+    sortOrder: "desc",
   });
   return items;
 }
+
 
 //approve/reject contract
 export async function requestContractApproval(id) {

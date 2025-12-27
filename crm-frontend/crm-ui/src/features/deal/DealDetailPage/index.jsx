@@ -19,6 +19,28 @@ function formatDate(value) {
   return d.toLocaleString();
 }
 
+function normalizeStageLabel(stage) {
+  if (!stage) return "-";
+  const s = String(stage).trim();
+
+  if (s.toUpperCase() === "PENDING_CONTRACT_APPROVAL") return "PENDING";
+  if (s.toLowerCase() === "pending contract approval") return "PENDING";
+
+  return s;
+}
+
+function normalizeStageKey(stage) {
+  if (!stage) return "unknown";
+  const s = String(stage).trim();
+
+  // KEY để map CSS => LUÔN lowercase
+  if (s.toUpperCase() === "PENDING_CONTRACT_APPROVAL") return "pending";
+  if (s.toLowerCase() === "pending contract approval") return "pending";
+
+  return s.toLowerCase().replace(/\s+/g, "_");
+}
+
+
 const EDITABLE_STAGES = ["POTENTIAL", "CONTACTED", "NEGOTIATION", "LOST"];
 const SEGMENTS = ["POTENTIAL", "NEW", "ACTIVE", "VIP", "DROPPED", "SPAM"];
 
@@ -28,7 +50,9 @@ function getMe() {
   } catch {
     return null;
   }
-}
+};
+
+
 
 function asInputString(v) {
   if (v === null || v === undefined || v === "") return "";
@@ -153,6 +177,8 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
     }
   };
 
+
+
   const handleReject = async () => {
     const reason = String(rejectReason || "").trim();
     if (!reason) return pushToast && pushToast("Reject reason is required.", "error");
@@ -170,6 +196,9 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
     }
   };
 
+
+
+
   return (
     <div className={styles.card}>
       <h2 className={styles.sectionTitle}>Deal Information</h2>
@@ -181,8 +210,11 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
           disabled={locked}
           onChange={(e) => handleFieldChange("stage", e.target.value)}
         >
-          {/* Không cho user chọn PENDING/CONTRACT thủ công */}
-          {locked && <option value={local.stage}>{local.stage}</option>}
+          {/* Không cho user chọn PENDING/CONTRACT */}
+          {locked && (
+            <option value={local.stage}>{normalizeStageLabel(local.stage)}</option>
+          )}
+
           {!locked &&
             EDITABLE_STAGES.map((s) => (
               <option key={s} value={s}>
@@ -433,9 +465,16 @@ export default function DealDetailPage() {
           </div>
         </div>
 
-        <span className={`${styles.pill} ${styles["pill_" + deal.stage.toLowerCase()]}`}>
-          {deal.stage}
-        </span>
+        {(() => {
+          const key = normalizeStageKey(deal.stage);
+          const label = normalizeStageLabel(deal.stage);
+          return (
+            <span className={`${styles.pill} ${styles[`pill_${key}`] || ""}`}>
+              {label}
+            </span>
+          );
+        })()}
+
       </div>
 
       <div className={styles.layout}>

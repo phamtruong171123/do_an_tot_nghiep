@@ -28,6 +28,17 @@ export default function ChatMoreAction({ conversationId }) {
   }, [conversationId]);
 
 
+  const getAppPrefixByRole = () => {
+    try {
+      const me = JSON.parse(localStorage.getItem("me") || "null");
+      const role = String(me?.role || "").toUpperCase();
+      return role === "ADMIN" ? "/app/admin" : "/app/agent";
+    } catch {
+      return "/app/admin"; // fallback
+    }
+  };
+
+
   // đóng menu khi click ra ngoài
   React.useEffect(() => {
     if (!menuOpen) return;
@@ -40,31 +51,36 @@ export default function ChatMoreAction({ conversationId }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [menuOpen]);
 
-  // đảm bảo đã load customer từ BE
+
   const ensureCustomerLoaded = async () => {
-    if (customer || loadingCustomer) return customer;
+    if (loadingCustomer) return { customer: null, latestDealId: null };
+
+
+    if (customer) return { customer, latestDealId };
 
     try {
       setLoadingCustomer(true);
-      const { customer: c, latestDealId: ld } =
-        await fetchConversationCustomer(conversationId);
+      const res = await fetchConversationCustomer(conversationId);
+      const c = res?.customer ?? null;
+      const ld = res?.latestDealId ?? null;
 
       if (!c) {
-        pushToast && pushToast("Không tìm thấy khách hàng cho hội thoại này.", "error");
-        return null;
+        pushToast?.("Không tìm thấy khách hàng cho hội thoại này.", "error");
+        return { customer: null, latestDealId: null };
       }
 
       setCustomer(c);
-      if (ld) setLatestDealId(ld);
-      return c;
+      setLatestDealId(ld);
+      return { customer: c, latestDealId: ld };
     } catch (e) {
       console.error("fetchConversationCustomer error", e);
-      pushToast && pushToast("Không tải được thông tin khách hàng.", "error");
-      return null;
+      pushToast?.("Không tải được thông tin khách hàng.", "error");
+      return { customer: null, latestDealId: null };
     } finally {
       setLoadingCustomer(false);
     }
   };
+
 
   const handleViewProfile = async () => {
     const c = await ensureCustomerLoaded();
@@ -74,17 +90,20 @@ export default function ChatMoreAction({ conversationId }) {
   };
 
   const handleViewLatestDeal = async () => {
-    const c = await ensureCustomerLoaded();
+    const { customer: c, latestDealId: id } = await ensureCustomerLoaded();
     if (!c) return;
 
-    const id = latestDealId;
     if (!id) {
-      pushToast && pushToast("Khách hàng chưa có deal nào.", "info");
+      setMenuOpen(false);
+      pushToast?.("Khách hàng chưa có deal nào.", "info");
       return;
     }
+
     setMenuOpen(false);
-    window.open(`/app/admin/deals/${id}`, "_self");
+    const prefix = getAppPrefixByRole();
+    window.open(`${prefix}/deals/${id}`, "_self");
   };
+
 
   const handleCreateDeal = async () => {
     const c = await ensureCustomerLoaded();
@@ -149,6 +168,7 @@ export default function ChatMoreAction({ conversationId }) {
         <DealCreateModal
           onClose={() => setShowCreateDeal(false)}
           initialCustomerId={customer.id}
+          initialCustomer={customer}
           pushToast={pushToast}
           onCreated={() => {
             pushToast && pushToast("Đã tạo deal mới.", "success");

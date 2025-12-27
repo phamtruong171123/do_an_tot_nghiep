@@ -5,6 +5,7 @@ import { useToast } from "../../../components/Toast";
 import DealCreateModal from "../components/DealCreateModal";
 import PageLayout from "../../../components/PageLayout";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
+import { formatNumber } from "../../../core/helper/string";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -71,98 +72,120 @@ export default function DealPage() {
     setPage(1);
   };
 
+  const normalizeStatusLabel = (status) => {
+    if (!status) return "-";
+    const s = String(status).trim();
+
+    if (s.toLowerCase() === "pending contract approval") return "PENDING";
+    if (s.toUpperCase() === "PENDING_CONTRACT_APPROVAL") return "PENDING";
+
+    return s;
+  };
+
+  const normalizeStatusKey = (status) => {
+    if (!status) return "unknown";
+    const s = String(status).trim();
+
+    if (s.toLowerCase() === "pending contract approval") return "PENDING";
+    if (s.toUpperCase() === "PENDING_CONTRACT_APPROVAL") return "PENDING";
+
+    return s.toLowerCase().replace(/\s+/g, "_"); // ví dụ "In Progress" -> "in_progress"
+  };
+
+
   return (
     <PageLayout>
       <div className={styles.page}>
         <div className={styles.header}>
-          <div>
+          <div className={styles.headerLeft}>
             <h1 className={styles.title}>Deals</h1>
             <div className={styles.subtitle}>Total: {total} deals</div>
           </div>
-          <button
-            className={styles.primaryBtn}
-            onClick={() => setShowCreate(true)}
-          >
-            + Add New 
-          </button>
 
-          
-        </div>
-  
-        <div className={styles.card}>
-        
-          <div className={styles.toolbar}>
-            <input
-              className={styles.searchInput}
-              placeholder="Search by deal or customer"
-              value={search}
-              onChange={handleSearchChange}
-            />
-  
-            <div className={styles.sortGroup}>
-              <span className={styles.sortLabel}>Sort by:</span>
-              <select
-                className={styles.sortSelect}
-                value={`${sortBy}:${sortOrder}`}
-                onChange={handleSortChange}
-              >
-                <option value="createdAt:desc">Newest</option>
-                <option value="createdAt:asc">Oldest</option>
-                <option value="amount:desc">Amount: high → low</option>
-                <option value="amount:asc">Amount: low → high</option>
-                <option value="appointmentAt:desc">Appointment: latest</option>
-                <option value="appointmentAt:asc">Appointment: earliest</option>
-              </select>
+          <div className={styles.headerMiddle}>
+            <div className={styles.toolbar}>
+              <input
+                className={styles.searchInput}
+                placeholder="Search by deal or customer"
+                value={search}
+                onChange={handleSearchChange}
+              />
+
+              <div className={styles.sortGroup}>
+                <span className={styles.sortLabel}>Sort by:</span>
+                <select
+                  className={styles.sortSelect}
+                  value={`${sortBy}:${sortOrder}`}
+                  onChange={handleSortChange}
+                >
+                  <option value="createdAt:desc">Newest</option>
+                  <option value="createdAt:asc">Oldest</option>
+                  <option value="amount:desc">Amount: high → low</option>
+                  <option value="amount:asc">Amount: low → high</option>
+                  <option value="appointmentAt:desc">Appointment: latest</option>
+                  <option value="appointmentAt:asc">Appointment: earliest</option>
+                </select>
+              </div>
             </div>
           </div>
-  
-          {loading ? (
-            <div className={styles.empty}>Loading...</div>
-          ) : items.length === 0 ? (
-            <div className={styles.empty}>No deals found.</div>
-          ) : (
-            <table className={styles.table}>
-              <thead>
+
+          <div className={styles.headerRight}>
+            <button className={styles.primaryBtn} onClick={() => setShowCreate(true)}>
+              + Add New
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.tableWrap}>
+            {loading ? (
+              <div className={styles.empty}>Loading...</div>
+            ) : items.length === 0 ? (
+              <div className={styles.empty}>No deals found.</div>
+            ) : (
+              <table className={styles.table}>
+                <thead>
                 <tr>
                   <th>Deal</th>
                   <th>Customer</th>
                   <th>Stage</th>
                   <th>Appointment</th>
-                  <th>Paid Amount</th>
+                  <th className={styles.amountCol}>Paid Amount</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {items.map((d) => (
                   <tr
                     key={d.id}
                     className={styles.row}
-                    onClick={() =>
-                      window.open(`/app/admin/deals/${d.id}`, "_self")
-                    }
+                    onClick={() => window.open(`/app/admin/deals/${d.id}`, "_self")}
                   >
                     <td className={styles.cellTitle}>{d.title}</td>
                     <td>{d.customerName || "-"}</td>
                     <td>
-                      <span
-                        className={`${styles.pill} ${
-                          styles["pill_" + d.stage.toLowerCase()]
-                        }`}
-                      >
-                        {d.stage}
-                      </span>
+                      {(() => {
+                        const stageKey = normalizeStatusKey(d.stage);
+                        const stageLabel = normalizeStatusLabel(d.stage);
+
+                        return (
+                          <span className={`${styles.pill} ${styles["pill_" + stageKey] || ""}`}>
+                            {stageLabel}
+                          </span>
+                        );
+                      })()}
                     </td>
+
                     <td>{formatDate(d.appointmentAt)}</td>
                     <td className={styles.cellAmount}>
-                      {d.paidAmount != null
-                        ? d.paidAmount.toLocaleString("en-US")
-                        : "-"} Not Paid
+                      {d.paidAmount != null ? `${formatNumber(d.paidAmount.toLocaleString("en-US"))} VND` : "-"}
                     </td>
+
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          )}
-  
+                </tbody>
+              </table>
+            )}
+          </div>
+
           {totalPages > 1 && (
             <div className={styles.pagination}>
               <button
@@ -184,7 +207,6 @@ export default function DealPage() {
               </button>
             </div>
           )}
-        </div>
   
         {showCreate && (
           <DealCreateModal

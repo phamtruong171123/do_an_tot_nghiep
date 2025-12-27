@@ -3,12 +3,12 @@ import styles from "./CustomerSearchSelect.module.scss";
 import { searchCustomers } from "../../features/customer/api";
 
 export default function CustomerSearchSelect({
-  value,              // customerId (number | string | null)
-  onChange,           // (customerId, customerObj) => void
+  value,
+  onChange,
   placeholder = "Search customer…",
   limit = 100,
   debounceMs = 300,
-}) {
+   selectedCustomer = null, disabled = false, }) {
   const [query, setQuery] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -59,29 +59,48 @@ export default function CustomerSearchSelect({
 
   const selected = React.useMemo(() => {
     if (value == null) return null;
-    // nếu list hiện tại có, show ngay label; không có thì vẫn show value rỗng
-    return items.find((x) => String(x.id) === String(value)) || null;
-  }, [value, items]);
+
+    const fromItems = items.find((x) => String(x.id) === String(value)) || null;
+    if (fromItems) return fromItems;
+
+    if (selectedCustomer && String(selectedCustomer.id) === String(value)) {
+      return selectedCustomer;
+    }
+    return null;
+  }, [value, items, selectedCustomer]);
+
 
   return (
     <div className={styles.root} ref={containerRef}>
-      <div className={styles.control} onClick={() => setOpen(true)}>
+      <div
+        className={styles.control}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(true);
+        }}
+      >
         <input
           className={styles.input}
+          disabled={disabled}
           value={open ? query : (selected?.name || query)}
           placeholder={placeholder}
-          onFocus={() => setOpen(true)}
+          onFocus={() => {
+            if (disabled) return;
+            setOpen(true);
+          }}
           onChange={(e) => {
+            if (disabled) return;
             setQuery(e.target.value);
             setOpen(true);
           }}
         />
+
         <div className={styles.right}>
           {loading ? <span className={styles.spinner}>…</span> : <span className={styles.chev}>▾</span>}
         </div>
       </div>
 
-      {open && (
+      {open && !disabled && (
         <div className={styles.dropdown}>
           {query.trim() && items.length === 0 && !loading && (
             <div className={styles.empty}>No results</div>

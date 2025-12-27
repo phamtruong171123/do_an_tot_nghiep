@@ -110,6 +110,7 @@ export default function AppRoutes() {
           <Route path="contacts"  element={<CustomerPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="deals" element={<DealPage />} />
+          <Route path="deals/:id" element={<DealDetailPage />} />
 <Route path="settings" element={<SettingsPage me={me} />} />
           <Route path="/app/agent/settings" element={<SettingsPage />} />
           <Route path="faq" element={<FaqPage currentUser={me} />} />

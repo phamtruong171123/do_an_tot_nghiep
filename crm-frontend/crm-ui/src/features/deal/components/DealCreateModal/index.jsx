@@ -8,7 +8,7 @@ export default function DealCreateModal({
   onClose,
   onCreated,
   pushToast,
-  initialCustomerId,
+  initialCustomerId, initialCustomer,
 }) {
   const [customerId, setCustomerId] = React.useState(
     initialCustomerId ? Number(initialCustomerId) : null
@@ -22,6 +22,12 @@ export default function DealCreateModal({
   const [paidAmount, setPaidAmount] = React.useState("");
 
   const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (initialCustomerId == null) return;
+    setCustomerId(Number(initialCustomerId));
+  }, [initialCustomerId]);
+
 
   const goodsAmountNum = React.useMemo(() => {
     const q = convertStringToNumber(quantity);
@@ -84,6 +90,8 @@ export default function DealCreateModal({
               value={customerId}
               onChange={(id) => setCustomerId(id)}
               placeholder="Search by name or phone number..."
+              disabled={!!initialCustomerId}
+              selectedCustomer={initialCustomer}
             />
           </label>
 

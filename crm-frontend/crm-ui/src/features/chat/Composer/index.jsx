@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./Composer.module.scss";
-
+import sent from "../../../assets/images/sent.png"
 export default function Composer({ onSend }) {
   const [text, setText] = React.useState("");
 
@@ -40,7 +40,9 @@ export default function Composer({ onSend }) {
       />
       <div className={styles.actions}>
         <button className={styles.ghost} type="button" title="Attach">📎</button>
-        <button className={styles.primary} type="submit">Send</button>
+        <button className={styles.primary} type="submit" >
+          Send
+        </button>
       </div>
     </form>
   );
