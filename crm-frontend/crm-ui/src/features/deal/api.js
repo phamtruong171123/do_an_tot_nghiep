@@ -26,7 +26,6 @@ export async function fetchDeals(opts = {}) {
   const {
     page,
     pageSize,
-    // backward-compatible (nếu chỗ khác lỡ truyền limit/offset)
     limit,
     offset,
     search,
@@ -34,6 +33,7 @@ export async function fetchDeals(opts = {}) {
     sortOrder,
     customerId,
     stage,
+    view
   } = opts;
 
   const effectivePageSize =
@@ -63,6 +63,7 @@ export async function fetchDeals(opts = {}) {
   if (search) params.set("search", search);
   if (sortBy) params.set("sortBy", sortBy);
   if (sortOrder) params.set("sortOrder", sortOrder);
+  if(view) params.set("view", view);
 
   const url = `/api/deals?${params.toString()}`;
   const res = await apiGet(url);

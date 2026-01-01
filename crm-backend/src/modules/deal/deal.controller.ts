@@ -5,7 +5,7 @@ import { JwtUser } from "../../middleware/auth";
 
 
 export async function getDeals(req: Request, res: Response) {
-  const { customerId, page, pageSize, search, sortBy, sortOrder, stage } = req.query;
+  const { customerId, page, pageSize, search, sortBy, sortOrder, stage,view } = req.query;
   const user = (req as any).user as JwtUser;
 
   const data = await dealService.listDeals({
@@ -20,6 +20,7 @@ export async function getDeals(req: Request, res: Response) {
         : undefined,
     sortOrder: sortOrder === "asc" || sortOrder === "desc" ? sortOrder : undefined,
     user: { id: user.id, role: user.role },
+    view: view as any,
   });
 
   res.json(data);
@@ -38,18 +39,20 @@ export async function getDealById(req: Request, res: Response) {
 export async function postDeal(req: Request, res: Response) {
   const user = (req as any).user as JwtUser;
 
-  const { customerId, title, description, amount, currency, appointmentAt } = req.body;
+  const { customerId, title, description, quantity, unitPrice,paidAmount, costNote, appointmentAt } = req.body;
 
   if (!customerId || !title) {
     return res.status(400).json({ message: "customerId và title là bắt buộc" });
   }
 
-  const deal = await dealService.createDeal({
+  const deal:any = await dealService.createDeal({
     customerId: Number(customerId),
     title,
     description,
-    amount: amount != null ? Number(amount) : undefined,
-    currency,
+    quantity: quantity != null ? Number(quantity) : undefined,
+    unitPrice: unitPrice !=null? Number(unitPrice): undefined,
+    paidAmount: paidAmount !=null? Number(paidAmount): undefined,
+    costNote:costNote ?? "",
     appointmentAt: appointmentAt ? new Date(appointmentAt) : undefined,
     ownerId: user.id,
   });

@@ -54,11 +54,14 @@ export default function CustomerToolbar({
       <div className={cx("toolbarRight")}>
         {/* Search */}
         <form className={cx("searchWrapper")} onSubmit={handleSearchSubmit}>
-          <i className={cx("searchIcon", "fa-solid fa-magnifying-glass")} />
+          <i
+            className={`fa-solid fa-magnifying-glass ${cx("searchIcon")}`}
+            aria-hidden="true"
+          />
           <input
             type="text"
             className={cx("searchInput")}
-            placeholder="Search by name, email, phone..."
+            placeholder="Search by name, email or phone"
             value={safeFilters.q}
             onChange={handleSearchChange}
           />
@@ -81,7 +84,7 @@ export default function CustomerToolbar({
 
         {/* Sort */}
         <div className={cx("sortWrapper")}>
-          <label className={cx("sortLabel")}>Sort by:</label>
+          <label className={cx("sortLabel")}></label>
           <select
             className={cx("sortSelect")}
             value={safeFilters.sortBy}
@@ -99,8 +102,8 @@ export default function CustomerToolbar({
           className={cx("addBtn")}
           onClick={onAddNew}
         >
-          Add New Customer
-          <span className={cx("addIcon")}>+</span>
+          Add New
+          <i className="fa-solid fa-plus" aria-hidden="true" />
         </button>
       </div>
     </div>

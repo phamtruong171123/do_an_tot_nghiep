@@ -11,9 +11,10 @@
   width: 240px;
   flex-shrink: 0;
 
-  height: 100%;         /* sidebar luôn full chiều cao khung */
-  overflow-y: auto;     /* nếu menu dài thì sidebar tự cuộn */
+  height: 100%;
+  overflow-y: auto;
   border-right: 1px solid #e5e7eb;
+  overflow-x: hidden;
 }
 
 .main {

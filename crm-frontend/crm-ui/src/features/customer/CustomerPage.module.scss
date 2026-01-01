@@ -11,14 +11,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: nowrap;
 }
 
 .toolbarLeft {
+  flex: 0 0 auto;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-
 
 .title {
   margin: 0;
@@ -32,59 +36,103 @@
 }
 
 .toolbarRight {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-content: flex-end;
 }
 
 /* Search */
 
 .searchWrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  background: #f9fafb;
+  position: relative;
+  flex: 1 1 auto;
   min-width: 260px;
 }
 
 .searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   font-size: 13px;
   color: #9ca3af;
+  pointer-events: none;
 }
 
 .searchInput {
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 13px;
   width: 100%;
+  padding: 8px 10px;
+  padding-left: 28px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+}
+
+.searchInput:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
 }
 
 /* Segment filter */
 
 .segmentFilter {
-  min-width: 150px;
+  flex: 0 0 auto;
 }
 
 .segmentSelect {
-  width: 100%;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid #e5e7eb;
-  padding: 6px 10px;
+  border: 1px solid #d1d5db;
   font-size: 13px;
-  background: #f9fafb;
+  background-color: #f9fafb;
+  outline: none;
+}
+
+.segmentSelect:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+}
+
+.sortWrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #6b7280;
+  flex: 0 0 auto;
+}
+
+.sortLabel {
+  white-space: nowrap;
+}
+
+.sortSelect {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  outline: none;
+  background-color: #f9fafb;
+}
+
+.sortSelect:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
 }
 
 .addBtn {
   border: none;
   background: #2563eb;
   color: #ffffff;
-  padding: 10px 18px;
+  padding: 8px 16px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;

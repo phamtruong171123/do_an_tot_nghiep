@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./styles.module.scss";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   fetchDealDetail,
   createDealActivity,
@@ -63,8 +63,10 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
   
   const [local, setLocal] = React.useState(deal);
   const [rejectReason, setRejectReason] = React.useState("");
+  const navigate=useNavigate();
 
   const me = React.useMemo(() => getMe(), []);
+  const role=(me?.role).toLowerCase();
   const isAdmin = me?.role === "ADMIN";
 
   React.useEffect(() => {
@@ -135,12 +137,12 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
       return pushToast && pushToast("Cost explanation is required.", "error");
     if (paid == null || paid <= 0)
       return pushToast && pushToast("Paid amount is required.", "error");
-    if (ga == null || paid < ga)
-      return pushToast &&
-        pushToast(
-          "Paid amount must be greater than or equal to goods amount.",
-          "error"
-        );
+    // if (ga == null || paid < ga)
+    //   return pushToast &&
+    //     pushToast(
+    //       "Paid amount must be greater than or equal to goods amount.",
+    //       "error"
+    //     );
 
     const ok = window.confirm(
       "Are you sure to submit this deal for contract approval? This action cannot be undone."
@@ -169,7 +171,9 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
       const updated = await approveContract(deal.id);
       onChange(updated);
       await reload?.();
+      navigate(`/app/${role}/deals/`);
       pushToast && pushToast("Approved. Deal is now CONTRACT.", "success");
+
     } catch (e) {
       console.error("Approve failed", e);
       pushToast &&
@@ -189,6 +193,7 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
       setRejectReason("");
       await reload?.();
       pushToast && pushToast("Rejected.", "success");
+      navigate(`/app/${role}/deals/`);
     } catch (e) {
       console.error("Reject failed", e);
       pushToast &&

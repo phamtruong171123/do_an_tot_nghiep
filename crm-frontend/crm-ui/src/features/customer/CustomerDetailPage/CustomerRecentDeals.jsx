@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./styles.module.scss";
 import { fetchRecentDealsForCustomer } from "../../deal/api";
+import { useNavigate } from "react-router-dom";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -11,6 +12,7 @@ function formatDate(value) {
 export default function CustomerRecentDeals({ customerId }) {
   const [items, setItems] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (!customerId) return;
@@ -51,7 +53,7 @@ export default function CustomerRecentDeals({ customerId }) {
                 key={d.id}
                 className={styles.item}
                 onClick={() =>
-                  window.open(`/app/admin/deals/${d.id}`, "_self")
+                  navigate(`/app/admin/deals/${d.id}`)
                 }
               >
                 <div className={styles.itemTop}>

@@ -21,7 +21,7 @@ export default function TicketToolbar({
     <div className={cx("toolbar")}>
       <div className={cx("left")}>
         <h2 className={cx("title")}>Tickets</h2>
-        <div className={cx("total")}>Total: {total} tickets</div>
+        <div className={cx("total")}>Total: <strong>{total}</strong> tickets</div>
       </div>
 
       <div className={cx("center")}>
@@ -33,7 +33,7 @@ export default function TicketToolbar({
           <input
             className={cx("search")}
             type="text"
-            placeholder="Search ticket..."
+            placeholder="Search by code or title"
             value={searchText}
             onChange={(e) => onSearchTextChange(e.target.value)}
           />
@@ -73,7 +73,7 @@ export default function TicketToolbar({
         </div>
 
         <button className={cx("addBtn")} type="button" onClick={onAddNew}>
-          <span>Add New Ticket</span>
+          Add New
           <i className="fa-solid fa-plus" aria-hidden="true" />
         </button>
       </div>

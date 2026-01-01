@@ -89,7 +89,7 @@ export default function DealCreateModal({
             <CustomerSearchSelect
               value={customerId}
               onChange={(id) => setCustomerId(id)}
-              placeholder="Search by name or phone number..."
+              placeholder="Search by name or phone number"
               disabled={!!initialCustomerId}
               selectedCustomer={initialCustomer}
             />

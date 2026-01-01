@@ -207,13 +207,13 @@ export default function TicketPage() {
       <TicketList items={items} onEdit={handleEditTicket} />
 
       <TicketLayout.Footer>
-        <button
-          type="button"
-          onClick={handleLoadMore}
-          disabled={loading || !hasMore}
-        >
-          {loading ? "Loading..." : hasMore ? "Load More" : "No more tickets"}
-        </button>
+        {/*<button*/}
+        {/*  type="button"*/}
+        {/*  onClick={handleLoadMore}*/}
+        {/*  disabled={loading || !hasMore}*/}
+        {/*>*/}
+        {/*  {loading ? "Loading..." : hasMore ? "Load More" : "No more tickets"}*/}
+        {/*</button>*/}
       </TicketLayout.Footer>
 
       <TicketForm

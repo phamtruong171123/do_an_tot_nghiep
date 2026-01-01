@@ -175,15 +175,15 @@ const { pushToast } = useToast?.() || { pushToast: () => {} };
           onRowClick={handleRowClick}
         />
   
-        <div className={cx("loadMoreWrapper")}>
-          <button
-            type="button"
-            className={cx("loadMoreBtn")}
-            onClick={handleLoadMore}
-          >
-            Load More
-          </button>
-        </div>
+        {/*<div className={cx("loadMoreWrapper")}>*/}
+        {/*  <button*/}
+        {/*    type="button"*/}
+        {/*    className={cx("loadMoreBtn")}*/}
+        {/*    onClick={handleLoadMore}*/}
+        {/*  >*/}
+        {/*    Load More*/}
+        {/*  </button>*/}
+        {/*</div>*/}
         <CreateCustomerForm
     open={isCreateOpen}
     onClose={() => setIsCreateOpen(false)}

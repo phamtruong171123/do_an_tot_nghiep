@@ -4,6 +4,7 @@ import { useToast } from "../../../components/Toast";
 import { fetchConversationCustomer } from "../api";
 import CustomerSidePanel from "../CustomerSidePanel";
 import DealCreateModal from "../../deal/components/DealCreateModal";
+import { useNavigate } from "react-router-dom";
 
 export default function ChatMoreAction({ conversationId }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -18,6 +19,7 @@ export default function ChatMoreAction({ conversationId }) {
   const { pushToast } = useToast?.() || { pushToast: () => {} };
 
   const menuRef = React.useRef(null);
+  const navigate=useNavigate();
 
    React.useEffect(() => {
     setCustomer(null);
@@ -101,7 +103,7 @@ export default function ChatMoreAction({ conversationId }) {
 
     setMenuOpen(false);
     const prefix = getAppPrefixByRole();
-    window.open(`${prefix}/deals/${id}`, "_self");
+    navigate(`${prefix}/deals/${id}`);
   };
 
 

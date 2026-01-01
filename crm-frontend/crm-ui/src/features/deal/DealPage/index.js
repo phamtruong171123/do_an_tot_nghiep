@@ -6,7 +6,9 @@ import DealCreateModal from "../components/DealCreateModal";
 import PageLayout from "../../../components/PageLayout";
 import { useDebouncedValue } from "../../../hooks/useDebouncedValue";
 import { formatNumber } from "../../../core/helper/string";
-
+import { useNavigate } from "react-router-dom";
+import classNames from "classnames";
+const cx = classNames.bind(styles);
 function formatDate(value) {
   if (!value) return "-";
   const d = new Date(value);
@@ -22,29 +24,49 @@ export default function DealPage() {
   const [loading, setLoading] = React.useState(false);
   const [showCreate, setShowCreate] = React.useState(false);
 
-
   const [search, setSearch] = React.useState("");
-  const [sortBy, setSortBy] = React.useState("createdAt");
-  const [sortOrder, setSortOrder] = React.useState("desc"); // asc | desc
+  const [stageFilter, setStageFilter] = React.useState("");
 
-  const debouncedSearch = useDebouncedValue(search, 400); 
+  const debouncedSearch = useDebouncedValue(search, 400);
   const { pushToast } = useToast?.() || { pushToast: () => {} };
 
-  // load data mỗi khi page / search / sort thay đổi
+  const navigate=useNavigate();
+
+  function getMe() {
+    try {
+      return JSON.parse(localStorage.getItem("me") || "null");
+    } catch (err) {
+      return null;
+    }
+  }
+
+  const me = React.useMemo(() => getMe(), []);
+  const isAdmin = me?.role === "ADMIN";
+  const role=(me?.role).toLowerCase();
+
+  const [tab, setTab] = React.useState("mine");
+
+
   React.useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch, sortBy, sortOrder]);
+  }, [page, debouncedSearch, stageFilter, tab]);
 
   async function loadData() {
     setLoading(true);
     try {
-     const { items, total } = await fetchDeals({
+      const view = isAdmin
+        ? tab === "approval"
+          ? "pendingApproval"
+          : "mine"
+        : undefined;
+
+      const { items, total } = await fetchDeals({
         page,
         pageSize: PAGE_SIZE,
         search: debouncedSearch || undefined,
-        sortBy,
-        sortOrder,
+        stage: stageFilter || undefined,
+        view,
       });
 
       setItems(items);
@@ -59,16 +81,14 @@ export default function DealPage() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // khi đổi search → về page 1
   const handleSearchChange = (e) => {
     setPage(1);
     setSearch(e.target.value);
   };
 
-  const handleSortChange = (e) => {
-    const [field, order] = e.target.value.split(":");
-    setSortBy(field);
-    setSortOrder(order);
+
+  const handleStageChange = (e) => {
+    setStageFilter(e.target.value);
     setPage(1);
   };
 
@@ -89,9 +109,8 @@ export default function DealPage() {
     if (s.toLowerCase() === "pending contract approval") return "PENDING";
     if (s.toUpperCase() === "PENDING_CONTRACT_APPROVAL") return "PENDING";
 
-    return s.toLowerCase().replace(/\s+/g, "_"); // ví dụ "In Progress" -> "in_progress"
+    return s.toLowerCase().replace(/\s+/g, "_");
   };
-
 
   return (
     <PageLayout>
@@ -99,121 +118,161 @@ export default function DealPage() {
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <h1 className={styles.title}>Deals</h1>
-            <div className={styles.subtitle}>Total: {total} deals</div>
+            <div className={styles.subtitle}>Total: <strong>{total}</strong> deals</div>
           </div>
 
           <div className={styles.headerMiddle}>
             <div className={styles.toolbar}>
+            <div className={styles.searchBox}>
+              <i
+                className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`}
+                aria-hidden="true"
+              />
+
               <input
                 className={styles.searchInput}
-                placeholder="Search by deal or customer"
+                placeholder="Search by code, title or customer"
                 value={search}
                 onChange={handleSearchChange}
               />
+            </div>
+
+
 
               <div className={styles.sortGroup}>
-                <span className={styles.sortLabel}>Sort by:</span>
+                <span className={styles.sortLabel}>Stage:</span>
                 <select
                   className={styles.sortSelect}
-                  value={`${sortBy}:${sortOrder}`}
-                  onChange={handleSortChange}
+                  value={stageFilter}
+                  onChange={handleStageChange}
                 >
-                  <option value="createdAt:desc">Newest</option>
-                  <option value="createdAt:asc">Oldest</option>
-                  <option value="amount:desc">Amount: high → low</option>
-                  <option value="amount:asc">Amount: low → high</option>
-                  <option value="appointmentAt:desc">Appointment: latest</option>
-                  <option value="appointmentAt:asc">Appointment: earliest</option>
+                  <option value="">ALL</option>
+                  <option value="POTENTIAL">POTENTIAL</option>
+                  <option value="CONTACTED">CONTACTED</option>
+                  <option value="NEGOTIATION">NEGOTIATION</option>
+                  <option value="PENDING_CONTRACT_APPROVAL">PENDING</option>
+                  <option value="CONTRACT">CONTRACT</option>
+                  <option value="LOST">LOST</option>
                 </select>
               </div>
             </div>
           </div>
 
+          {isAdmin && (
+            <div className={styles.tabGroup}>
+              <select
+                className={styles.sortSelect}
+                value={tab}
+                onChange={(e) => {
+                  setTab(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="mine">My deals</option>
+                <option value="approval">Deals pending approval</option>
+              </select>
+            </div>
+          )}
+
           <div className={styles.headerRight}>
-            <button className={styles.primaryBtn} onClick={() => setShowCreate(true)}>
-              + Add New
+            <button
+              className={styles.primaryBtn}
+              onClick={() => setShowCreate(true)}
+            >
+              <span style={{ marginRight: "9px" }}>Add New</span>
+              <i className="fa-solid fa-plus" aria-hidden="true" />
             </button>
           </div>
         </div>
 
         <div className={styles.tableWrap}>
-            {loading ? (
-              <div className={styles.empty}>Loading...</div>
-            ) : items.length === 0 ? (
-              <div className={styles.empty}>No deals found.</div>
-            ) : (
-              <table className={styles.table}>
-                <thead>
-                <tr>
-                  <th>Deal</th>
-                  <th>Customer</th>
-                  <th>Stage</th>
-                  <th>Appointment</th>
-                  <th className={styles.amountCol}>Paid Amount</th>
-                </tr>
-                </thead>
-                <tbody>
-                {items.map((d) => (
-                  <tr
-                    key={d.id}
-                    className={styles.row}
-                    onClick={() => window.open(`/app/admin/deals/${d.id}`, "_self")}
-                  >
-                    <td className={styles.cellTitle}>{d.title}</td>
-                    <td>{d.customerName || "-"}</td>
-                    <td>
-                      {(() => {
-                        const stageKey = normalizeStatusKey(d.stage);
-                        const stageLabel = normalizeStatusLabel(d.stage);
+          {loading ? (
+            <div className={styles.empty}>Loading...</div>
+          ) : items.length === 0 ? (
+            <div className={styles.empty}>No deals found.</div>
+          ) : (
+            <table className={styles.table}>
+              <thead>
+              <tr>
+                <th>Code</th>
+                <th>Title</th>
+                <th>Customer</th>
+                <th>Stage</th>
+                <th>Appointment</th>
+                <th className={styles.amountCol}>Paid Amount</th>
+              </tr>
+              </thead>
+              <tbody>
+              {items.map((d) => (
+                <tr
+                  key={d.id}
+                  className={styles.row}
+                  onClick={() =>
+                    navigate(`/app/${role}/deals/${d.id}`)
+                  }
+                >
+                  <td>{d.code}</td>
+                  <td className={styles.cellTitle}>{d.title}</td>
+                  <td>{d.customerName || "-"}</td>
+                  <td>
+                    {(() => {
+                      const stageKey = normalizeStatusKey(d.stage);
+                      const stageLabel = normalizeStatusLabel(d.stage);
 
-                        return (
-                          <span className={`${styles.pill} ${styles["pill_" + stageKey] || ""}`}>
+                      return (
+                        <span
+                          className={`${styles.pill} ${
+                            styles["pill_" + stageKey] || ""
+                          }`}
+                        >
                             {stageLabel}
                           </span>
-                        );
-                      })()}
-                    </td>
+                      );
+                    })()}
+                  </td>
 
-                    <td>{formatDate(d.appointmentAt)}</td>
-                    <td className={styles.cellAmount}>
-                      {d.paidAmount != null ? `${formatNumber(d.paidAmount.toLocaleString("en-US"))} VND` : "-"}
-                    </td>
-
-                  </tr>
-                ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <button
-                className={styles.textBtn}
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Prev
-              </button>
-              <span>
-                Page {page} / {totalPages}
-              </span>
-              <button
-                className={styles.textBtn}
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </button>
-            </div>
+                  <td>{formatDate(d.appointmentAt)}</td>
+                  <td className={styles.cellAmount}>
+                    {d.paidAmount != null
+                      ? `${formatNumber(
+                        d.paidAmount.toLocaleString("en-US")
+                      )} VND`
+                      : "-"}
+                  </td>
+                </tr>
+              ))}
+              </tbody>
+            </table>
           )}
-  
+        </div>
+
+        {totalPages > 1 && (
+          <div className={styles.pagination}>
+            <button
+              className={styles.textBtn}
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Prev
+            </button>
+            <span>
+              Page {page} / {totalPages}
+            </span>
+            <button
+              className={styles.textBtn}
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
+
         {showCreate && (
           <DealCreateModal
             onClose={() => setShowCreate(false)}
             onCreated={() => {
               setShowCreate(false);
-              // reload lại về page 1 sau khi tạo deal mới
               setPage(1);
             }}
             pushToast={pushToast}

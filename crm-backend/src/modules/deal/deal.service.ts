@@ -36,6 +36,7 @@ export async function listDeals(params: {
   sortOrder?: "asc" | "desc";
   stage?: string;
   user: UserCtx;
+  view?: "mine" | "pendingApproval";
 }) {
   const {
     customerId,
@@ -46,15 +47,24 @@ export async function listDeals(params: {
     sortOrder = "desc",
   } = params;
 
+
+
   const where: Prisma.DealWhereInput = {};
-  if (params.user.role !== "ADMIN") where.ownerId = params.user.id;
-  if (params.stage) where.stage = params.stage as DealStage;
+  const view=params.view || "mine";
+  if(view==="pendingApproval") {
+    if(params.user.role!=="ADMIN") {
+      throw httpError(403, "Forbidden");
+    }
+    where.stage="PENDING_CONTRACT_APPROVAL";
+  }else {
+    where.ownerId = params.user.id;
+    if(params.stage) where.stage = params.stage as DealStage;
+  }
 
   if (typeof customerId === "number") {
     where.customerId = customerId;
   }
 
-  // 🔍 search theo title + customer.name
   if (search && search.trim() !== "") {
     const q = search.trim();
     where.OR = [
@@ -70,10 +80,14 @@ export async function listDeals(params: {
           },
         },
       },
+      {
+        code: {
+          contains: q,
+        }
+      },
     ];
   }
 
-  // 🔽 dynamic sort
   let orderBy: Prisma.DealOrderByWithRelationInput;
 
   switch (sortBy) {
@@ -149,12 +163,14 @@ export async function createDeal(data: {
   customerId: number;
   title: string;
   description?: string;
-  amount?: number;
-  currency?: string;
+  quantity?: number;
+  unitPrice?: number;
+  paidAmount?: number;
+  costNote?:string;
   appointmentAt?: Date;
   ownerId?: number;
 }) {
-  const code = "DE-" + Date.now(); // TODO: generate code đẹp hơn nếu cần
+  const code = "DE-" + Date.now();
 
   const  created = await prisma.deal.create({
     data: {
@@ -162,8 +178,10 @@ export async function createDeal(data: {
       title: data.title,
       description: data.description,
       customerId: data.customerId,
-      amount: data.amount,
-      currency: data.currency ?? "VND",
+      quantity: data.quantity,
+      unitPrice: data.unitPrice,
+      paidAmount: data.paidAmount,
+      costNote: data.costNote,
       appointmentAt: data.appointmentAt,
       ownerId: data.ownerId,
     },
@@ -336,9 +354,9 @@ export async function requestContractApproval(dealId: string, user: UserCtx) {
   const goodsAmount = unitPrice.mul(quantity);
 
  
-  if (paidAmount.lt(goodsAmount)) {
-    throw httpError(400, "Paid amount must be greater than or equal to goods amount");
-  }
+  // if (paidAmount.lt(goodsAmount)) {
+  //   throw httpError(400, "Paid amount must be greater than or equal to goods amount");
+  // }
 
   return prisma.deal.update({
     where: { id: dealId },
@@ -356,7 +374,8 @@ export async function approveContract(dealId: string, adminId: number) {
   if (!deal) throw httpError(404, "Deal not found");
   if (deal.stage !== "PENDING_CONTRACT_APPROVAL") throw httpError(409, "Deal is not pending approval");
 
-  return prisma.deal.update({
+
+  const updated = prisma.deal.update({
     where: { id: dealId },
     data: {
       stage: "CONTRACT",
@@ -364,6 +383,16 @@ export async function approveContract(dealId: string, adminId: number) {
       approvalReviewedById: adminId,
     },
   });
+  await prisma.dealActivity.create({
+    data: {
+      dealId: dealId,
+      authorId: adminId,
+      content: `Stage changed from PENDING APPROVAL to CONTRACT`,
+      activityAt: new Date(),
+    }
+  })
+
+  return updated;
 }
 
 export async function rejectContract(dealId: string, adminId: number, reason: string) {
@@ -374,7 +403,7 @@ export async function rejectContract(dealId: string, adminId: number, reason: st
   if (!deal) throw httpError(404, "Deal not found");
   if (deal.stage !== "PENDING_CONTRACT_APPROVAL") throw httpError(409, "Deal is not pending approval");
 
-  return prisma.deal.update({
+  const  updated =prisma.deal.update({
     where: { id: dealId },
     data: {
       stage: "NEGOTIATION",
@@ -383,5 +412,16 @@ export async function rejectContract(dealId: string, adminId: number, reason: st
       approvalRejectReason: r,
     },
   });
+
+  await prisma.dealActivity.create({
+    data: {
+      dealId: dealId,
+      authorId: adminId,
+      content: `Contract rejected, reason: ${reason}, \nStage changed from PENDING APPROVAL to NEGOTIATION`,
+      activityAt: new Date(),
+    }
+  })
+
+  return updated;
 }
 
