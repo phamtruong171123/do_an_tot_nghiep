@@ -16,6 +16,8 @@ import DealPage from '../features/deal/DealPage';
 import DealDetailPage from '../features/deal/DealDetailPage';
 import SettingsPage from "../features/settings";
 import GptConfigPage from "../features/gpt-config/GptConfigPage";
+import AgentDashboard from "../features/dashboard/AgentDashboard";
+import AdminDashboard from "../features/dashboard/AdminDashboard";
 
 function getMe() {
   try { return JSON.parse(localStorage.getItem("me") || "null"); }
@@ -75,10 +77,7 @@ export default function AppRoutes() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route
-            path="dashboard"
-            element={<Placeholder title="Admin Dashboard" />}
-          />
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="chat"      element={<Chat />} />
           <Route path="tickets"   element={<TicketPage />} />
           <Route path="contacts"  element={<CustomerPage />} />
@@ -101,19 +100,16 @@ export default function AppRoutes() {
           }
         >
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route
-            path="dashboard"
-            element={<Placeholder title="Agent Dashboard" />}
-          />
           <Route path="chat"      element={<Chat />} />
           <Route path="tickets"   element={<TicketPage />} />
           <Route path="contacts"  element={<CustomerPage />} />
           <Route path="customers/:id" element={<CustomerDetailPage />} />
           <Route path="deals" element={<DealPage />} />
           <Route path="deals/:id" element={<DealDetailPage />} />
-<Route path="settings" element={<SettingsPage me={me} />} />
+          <Route path="settings" element={<SettingsPage me={me} />} />
           <Route path="/app/agent/settings" element={<SettingsPage />} />
           <Route path="faq" element={<FaqPage currentUser={me} />} />
+          <Route path="dashboard" element={<AgentDashboard />} />
         </Route>
       </Route>
 

@@ -3,16 +3,9 @@ import TicketLayout from "./TicketLayout";
 import TicketToolbar from "./TicketToolbar";
 import TicketList from "./TicketList";
 import TicketForm from "./TicketForm";
-import {
-  fetchTickets,
-  createTicketFromForm,
-  updateTicketFromForm,
-  fetchActiveUsers,
-} from "./api";
+import { fetchTickets, createTicketFromForm, updateTicketFromForm, fetchActiveUsers } from "./api";
 import { useToast } from "../../components/Toast";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
-
-
 
 const PAGE_SIZE = 20;
 
@@ -44,17 +37,16 @@ export default function TicketPage() {
   const [editingTicket, setEditingTicket] = React.useState(null);
   const [submitting, setSubmitting] = React.useState(false);
 
-    const { pushToast } = useToast();
-
+  const { pushToast } = useToast();
 
   const [currentUser] = React.useState(() => getCurrentUserFromStorage());
   const isAdmin = currentUser?.role === "ADMIN";
-  console.log("isAdmin: ", isAdmin);
+  //console.log("Items:",items);
 
   const [assigneeOptions, setAssigneeOptions] = React.useState([]);
 
   // ====== Load list user cho ADMIN ======
-    React.useEffect(() => {
+  React.useEffect(() => {
     if (!isAdmin) return;
     let cancelled = false;
     (async () => {
@@ -69,12 +61,11 @@ export default function TicketPage() {
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
-
   // ====== Load list ticket từ BE ======
-    const loadTickets = React.useCallback(
+  const loadTickets = React.useCallback(
     async ({ append = false, page: nextPage = 1 } = {}) => {
       setLoading(true);
       try {
@@ -90,9 +81,7 @@ export default function TicketPage() {
         setHasMore(nextPage * PAGE_SIZE < total);
         setPage(nextPage);
 
-        setItems((prev) =>
-          append ? [...prev, ...fetched] : fetched
-        );
+        setItems((prev) => (append ? [...prev, ...fetched] : fetched));
       } catch (err) {
         console.error("Failed to fetch tickets", err);
         pushToast("Tải danh sách ticket thất bại.", "error");
@@ -102,7 +91,6 @@ export default function TicketPage() {
     },
     [statusFilter, mineOnly, debouncedSearchText, pushToast]
   );
-
 
   React.useEffect(() => {
     loadTickets({ append: false, page: 1 });
@@ -133,16 +121,20 @@ export default function TicketPage() {
 
   const handleEditTicket = (ticket) => {
     setFormMode("edit");
+    //console.log("Editting: ",ticket);
     setEditingTicket({
       id: ticket.id,
       subject: ticket.subject,
       customerName: ticket.customerName || "",
+      customerId: ticket.customerId || null,
       dueAt: ticket.dueAt || "",
       status: ticket.status,
       priority: ticket.priority,
       assigneeName: ticket.assigneeName || "",
       assigneeId: ticket.assigneeId ?? null,
     });
+
+
     setFormOpen(true);
   };
 
@@ -161,27 +153,19 @@ export default function TicketPage() {
         setTotal((prev) => prev + 1);
         pushToast("Tạo ticket thành công.", "success");
       } else if (formMode === "edit" && editingTicket) {
-        const updated = await updateTicketFromForm(
-          editingTicket.id,
-          formValues
-        );
-        setItems((prev) =>
-          prev.map((t) => (t.id === updated.id ? updated : t))
-        );
+        const updated = await updateTicketFromForm(editingTicket.id, formValues);
+        setItems((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
         pushToast("Cập nhật ticket thành công.", "success");
       }
       setFormOpen(false);
       setEditingTicket(null);
-      
     } catch (err) {
-      if(err.message === "Cannot update a closed ticket"){
+      if (err.message === "Cannot update a closed ticket") {
         pushToast("Không thể cập nhật ticket đã đóng.", "error");
       }
       console.error("Failed to submit ticket form", err);
       pushToast(
-        formMode === "create"
-          ? "Tạo ticket thất bại."
-          : "Cập nhật ticket thất bại.",
+        formMode === "create" ? "Tạo ticket thất bại." : "Cập nhật ticket thất bại.",
         "error"
       );
     } finally {

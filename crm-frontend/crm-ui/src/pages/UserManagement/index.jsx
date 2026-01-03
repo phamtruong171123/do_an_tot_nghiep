@@ -9,7 +9,6 @@ const cx = classNames.bind(styles);
 const ROLES = ["ADMIN", "AGENT"];
 const STATUSES = ["ACTIVE", "INACTIVE"];
 
-
 function timeAgo(d) {
   if (!d) return "N/A";
   const ms = Date.now() - new Date(d).getTime();
@@ -20,8 +19,6 @@ function timeAgo(d) {
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
 }
-
-
 
 export default function UserManagement() {
   // data
@@ -68,25 +65,24 @@ export default function UserManagement() {
 
   const [toasts, setToasts] = useState([]);
   function pushToast(message, type = "success", ttl = 3000) {
-  const id = Date.now() + Math.random();
-  setToasts((ts) => [...ts, { id, type, message }]);
-  // auto dismiss
-  setTimeout(() => {
+    const id = Date.now() + Math.random();
+    setToasts((ts) => [...ts, { id, type, message }]);
+    // auto dismiss
+    setTimeout(() => {
+      setToasts((ts) => ts.filter((t) => t.id !== id));
+    }, ttl);
+  }
+
+  // Tự refresh để cập nhật online / lastOnlineAt
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setRefreshTick((x) => x + 1), 25000);
+    return () => clearInterval(t);
+  }, []);
+
+  function dismissToast(id) {
     setToasts((ts) => ts.filter((t) => t.id !== id));
-  }, ttl);
-}
-
-    // Tự refresh để cập nhật online / lastOnlineAt
-const [refreshTick, setRefreshTick] = useState(0);
-useEffect(() => {
-  const t = setInterval(() => setRefreshTick((x) => x + 1), 25000);
-  return () => clearInterval(t);
-}, []);
-
-function dismissToast(id) {
-  setToasts((ts) => ts.filter((t) => t.id !== id));
-}
-
+  }
 
   // fetch list
   useEffect(() => {
@@ -117,28 +113,24 @@ function dismissToast(id) {
   const list = useMemo(() => users, [users]);
   const pageIds = useMemo(() => list.map((x) => x.id), [list]);
 
- 
   async function createUserApi(payload) {
-     return apiPost("/api/users", payload);
+    return apiPost("/api/users", payload);
   }
   async function updateUserApi(id, payload) {
-     return apiPut(`/api/users/${id}`, payload);
-   
+    return apiPut(`/api/users/${id}`, payload);
   }
   async function deleteUserApi(id) {
-     await apiDelete(`/api/users/${id}`);
-     pushToast("Xoá người dùng thành công.");
-   
+    await apiDelete(`/api/users/${id}`);
+    pushToast("Xoá người dùng thành công.");
   }
   async function batchRoleApi(ids, role) {
     await apiPost("/api/users/batch", { action: "setRole", ids, data: { role } });
     pushToast("Cập nhật vai trò thành công.");
-   
   }
 
   function openCreate() {
     setEditingId(null);
-    setForm({ username: "", email: "", role: "AGENT", status: "ACTIVE",fullName:"" });
+    setForm({ username: "", email: "", role: "AGENT", status: "ACTIVE", fullName: "" });
     setFormErr("");
     setOpen(true);
   }
@@ -190,7 +182,7 @@ function dismissToast(id) {
       setOpen(false);
     } catch (e2) {
       setFormErr(e2.message || "Save failed");
-       pushToast(e2.message || "Lưu thất bại.", "error");
+      pushToast(e2.message || "Lưu thất bại.", "error");
     }
   }
 
@@ -203,8 +195,8 @@ function dismissToast(id) {
     setUsers((u) => u.filter((x) => !ids.includes(x.id)));
     setSelected(new Set());
     try {
-       await apiPost("/api/users/batch", { action: "delete", ids });
-       pushToast("Xoá người dùng thành công.");
+      await apiPost("/api/users/batch", { action: "delete", ids });
+      pushToast("Xoá người dùng thành công.");
     } catch {
       setUsers(prev);
       alert("Delete failed");
@@ -232,7 +224,9 @@ function dismissToast(id) {
       <div className={cx("header")}>
         <h2>User Management</h2>
         <div className={cx("actions")}>
-          <button className={cx("primary")} onClick={openCreate}>+ New User</button>
+          <button className={cx("primary")} onClick={openCreate}>
+            + New User
+          </button>
         </div>
       </div>
 
@@ -244,13 +238,25 @@ function dismissToast(id) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select className={cx("select")} value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+        <select
+          className={cx("select")}
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+        >
           <option>All</option>
-          {ROLES.map((r) => <option key={r}>{r}</option>)}
+          {ROLES.map((r) => (
+            <option key={r}>{r}</option>
+          ))}
         </select>
-        <select className={cx("select")} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+        <select
+          className={cx("select")}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
           <option>All</option>
-          {STATUSES.map((s) => <option key={s}>{s}</option>)}
+          {STATUSES.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
         </select>
         <select className={cx("select")} value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="createdAt:desc">Newest</option>
@@ -264,14 +270,20 @@ function dismissToast(id) {
       {selected.size > 0 && (
         <div className={cx("bulkBar")}>
           <span>{selected.size} selected</span>
-          <button onClick={bulkDelete} className={cx("link", "danger")}>Delete</button>
+          <button onClick={bulkDelete} className={cx("link", "danger")}>
+            Delete
+          </button>
           <div className={cx("sep")} />
           <span>Set role:</span>
           {ROLES.map((r) => (
-            <button key={r} onClick={() => bulkSetRole(r)} className={cx("link")}>{r}</button>
+            <button key={r} onClick={() => bulkSetRole(r)} className={cx("link")}>
+              {r}
+            </button>
           ))}
           <div className={cx("spacer")} />
-          <button onClick={() => setSelected(new Set())} className={cx("link")}>Clear</button>
+          <button onClick={() => setSelected(new Set())} className={cx("link")}>
+            Clear
+          </button>
         </div>
       )}
 
@@ -296,45 +308,50 @@ function dismissToast(id) {
           <div className={cx("th")}>Role</div>
           <div className={cx("th")}>Status</div>
           <div className={cx("th")}>Activity</div>
-        
+
           <div className={cx("th", "wActions")}>Actions</div>
         </div>
 
         {loading && <div className={cx("empty")}>Loading…</div>}
         {err && !loading && <div className={cx("empty")}>Error: {err}</div>}
 
-        {!loading && !err && list.map((u) => (
-          <div key={u.id} className={cx("row")}>
-            <div className={cx("td", "wCheck")}>
-              <input type="checkbox" checked={isSelected(u.id)} onChange={() => toggleOne(u.id)} />
-            </div>
-            <div className={cx("td")}>{u.username}</div>
-            <div className={cx("td")}>{u.email}</div>
-            <div className={cx("td")}>
-              <span className={cx("badge", (u.role || "").toLowerCase())}>{u.role}</span>
-            </div>
-            <div className={cx("td")}>
-              <span className={cx("badge", (u.status || "").toLowerCase())}>{u.status}</span>
-            </div>
-            <div className={cx("td")}>
+        {!loading &&
+          !err &&
+          list.map((u) => (
+            <div key={u.id} className={cx("row")}>
+              <div className={cx("td", "wCheck")}>
+                <input
+                  type="checkbox"
+                  checked={isSelected(u.id)}
+                  onChange={() => toggleOne(u.id)}
+                />
+              </div>
+              <div className={cx("td")}>{u.username}</div>
+              <div className={cx("td")}>{u.email}</div>
+              <div className={cx("td")}>
+                <span className={cx("badge", (u.role || "").toLowerCase())}>{u.role}</span>
+              </div>
+              <div className={cx("td")}>
+                <span className={cx("badge", (u.status || "").toLowerCase())}>{u.status}</span>
+              </div>
+              <div className={cx("td")}>
                 {u.agentProfile?.online ? (
-                    <span className={cx("badge", "online")}>Online</span>
+                  <span className={cx("badge", "online")}>Online</span>
                 ) : (
-                    <span className={cx("muted")}>{timeAgo(u.agentProfile?.lastOnlineAt)}</span>
+                  <span className={cx("muted")}>{timeAgo(u.agentProfile?.lastOnlineAt)}</span>
                 )}
-            </div>
+              </div>
 
-            
-            <div className={cx("td", "wActions")}>
-              <button className={cx("link")} onClick={() => openEdit(u)}>
-                <i className="fa fa-edit" /> 
-              </button>
-              <button className={cx("link", "danger")} onClick={() => remove(u.id)}>
-                <i className="fa fa-trash" /> 
-              </button>
+              <div className={cx("td", "wActions")}>
+                <button className={cx("link")} onClick={() => openEdit(u)}>
+                  <i className="fa fa-edit" />
+                </button>
+                <button className={cx("link", "danger")} onClick={() => remove(u.id)}>
+                  <i className="fa fa-trash" />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
         {!loading && !err && !list.length && <div className={cx("empty")}>No users found.</div>}
       </div>
@@ -373,7 +390,6 @@ function dismissToast(id) {
               <label className={cx("field")}>
                 <span className={cx("label")}>FullName</span>
                 <input
-                  
                   className={cx("input")}
                   value={form.fullName}
                   onChange={(e) => setForm({ ...form, fullName: e.target.value })}
@@ -387,16 +403,19 @@ function dismissToast(id) {
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
                   {ROLES.map((r) => (
-                    <option key={r} value={r}>{r}</option>
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
                   ))}
                 </select>
               </label>
-             
 
               {formErr && <div className={cx("error")}>{formErr}</div>}
 
               <div className={cx("modalActions")}>
-                <button type="button" className={cx("btn")} onClick={() => setOpen(false)}>Cancel</button>
+                <button type="button" className={cx("btn")} onClick={() => setOpen(false)}>
+                  Cancel
+                </button>
                 <button type="submit" className={cx("btn", "primary")}>
                   {editingId ? "Save" : "Create"}
                 </button>
@@ -406,21 +425,21 @@ function dismissToast(id) {
         </div>
       )}
 
-      <div className={cx("toasts")} style={{ top:50}} aria-live="polite" aria-atomic="true">
-  {toasts.map((t) => (
-    <div key={t.id} className={cx("toast", t.type)}>
-      <span className={cx("toastMsg")}>{t.message}</span>
-      <button
-        className={cx("toastClose")}
-        onClick={() => dismissToast(t.id)}
-        aria-label="Close"
-        title="Close"
-      >
-        ×
-      </button>
-    </div>
-  ))}
-</div>
+      <div className={cx("toasts")} style={{ top: 50 }} aria-live="polite" aria-atomic="true">
+        {toasts.map((t) => (
+          <div key={t.id} className={cx("toast", t.type)}>
+            <span className={cx("toastMsg")}>{t.message}</span>
+            <button
+              className={cx("toastClose")}
+              onClick={() => dismissToast(t.id)}
+              aria-label="Close"
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

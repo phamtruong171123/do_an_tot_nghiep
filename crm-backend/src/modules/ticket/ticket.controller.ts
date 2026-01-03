@@ -123,7 +123,7 @@ export async function listTicketsHandler(req: Request, res: Response) {
         dueAt: t.dueAt,
         isOverdue: !!t.dueAt && (t.status === "OPEN" || t.status === "PENDING") && now > t.dueAt,
         assignee: t.assignee ? { id: t.assignee.id, name: t.assignee.username } : null,
-        customer: t.customer ? { id: t.customer.id, name: t.customer.name } : null,
+        customer: t.customer ? { id: t.customer.id, name: t.customer.name, customerSegment: t.customer.segment } : null,
         createdAt: t.createdAt,
         updatedAt: t.updatedAt,
         notesCount: t._count?.notes ?? 0,
@@ -240,12 +240,13 @@ export async function updateTicketHandler(req: Request, res: Response) {
   if (!authUser) return res.status(401).json({ message: "Unauthenticated" });
 
   const { id } = req.params;
-  const { subject, description, status, priority, assigneeId } = req.body as {
+  const { subject, description, status, priority, assigneeId, customerId } = req.body as {
     subject?: string;
     description?: string;
     status?: TicketStatus;
     priority?: TicketPriority;
     assigneeId?: number | null;
+    customerId?: number | null;
   };
 
   try {
@@ -267,6 +268,7 @@ export async function updateTicketHandler(req: Request, res: Response) {
       description,
       status,
       priority,
+      customerId,
     };
 
     if (authUser.role === "ADMIN" && assigneeId !== undefined) {
@@ -343,11 +345,12 @@ export async function createTicketFromConversationHandler(req: Request, res: Res
   const { id: userId } = authUser;
 
   const conversationId = req.params.id;
-  const { subject, description, priority, assigneeId } = req.body as {
+  const { subject, description, priority, assigneeId, customerId } = req.body as {
     subject?: string;
     description?: string;
     priority?: TicketPriority;
     assigneeId?: number;
+    customerId?: number;
   };
 
   if (!subject || !subject.trim()) {

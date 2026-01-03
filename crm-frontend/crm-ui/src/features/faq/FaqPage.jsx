@@ -27,8 +27,17 @@ export default function FaqPage({ currentUser }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer=setTimeout(() => setDebouncedSearch(searchText), 300);
+    return () => {
+      clearTimeout(timer);
+    }
+  }, [searchText]);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingFaq, setEditingFaq] = useState(null);
+
 
   const loadFaqs = async () => {
     setLoading(true);
@@ -49,14 +58,14 @@ export default function FaqPage({ currentUser }) {
   }, []);
 
   const filteredFaqs = useMemo(() => {
-    const q = searchText.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     if (!q) return faqs;
     return faqs.filter((f) => {
       const qText = (f.question || "").toLowerCase();
       const aText = (f.answer || "").toLowerCase();
       return qText.includes(q) || aText.includes(q);
     });
-  }, [faqs, searchText]);
+  }, [faqs, debouncedSearch]);
 
   const handleAddClick = () => {
     setEditingFaq(null);

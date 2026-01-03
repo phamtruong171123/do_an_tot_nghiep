@@ -8,14 +8,11 @@ export default function SettingsPage({ me }) {
   const role = me?.role || "AGENT";
   const isAdmin = role === "ADMIN";
 
-
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        
         <div>
           <h1 className={styles.title}>Settings</h1>
-          
         </div>
       </div>
 
@@ -23,26 +20,17 @@ export default function SettingsPage({ me }) {
         {/* FAQ: cả agent & admin đều có */}
         <button
           className={styles.card}
-          onClick={() =>
-            navigate(isAdmin ? "/app/admin/faq" : "/app/agent/faq")
-          }
+          onClick={() => navigate(isAdmin ? "/app/admin/faq" : "/app/agent/faq")}
         >
           <div className={styles.cardTitle}>FAQ</div>
-          <div className={styles.cardDesc}>
-            Common questions and quick answers for agents.
-          </div>
+          <div className={styles.cardDesc}>Common questions and quick answers for agents.</div>
         </button>
 
         {/* Chỉ admin mới thấy Users */}
         {isAdmin && (
-          <button
-            className={styles.card}
-            onClick={() => navigate("/app/admin/users")}
-          >
+          <button className={styles.card} onClick={() => navigate("/app/admin/users")}>
             <div className={styles.cardTitle}>Users</div>
-            <div className={styles.cardDesc}>
-              Manage system users and permissions.
-            </div>
+            <div className={styles.cardDesc}>Manage system users and permissions.</div>
           </button>
         )}
 

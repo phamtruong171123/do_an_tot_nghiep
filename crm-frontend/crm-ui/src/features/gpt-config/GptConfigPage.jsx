@@ -33,12 +33,9 @@ export default function GptConfigPage() {
           ...prev,
           baseUrl: res.baseUrl || prev.baseUrl,
           model: res.model || prev.model,
-          temperature:
-            typeof res.temperature === "number"
-              ? res.temperature
-              : prev.temperature,
+          temperature: typeof res.temperature === "number" ? res.temperature : prev.temperature,
           systemPrompt: res.systemPrompt || "",
-          apiKey: res.apiKey || "", 
+          apiKey: res.apiKey || "",
         }));
       } catch (e) {
         pushToast("Lỗi tải cấu hình GPT", "error");
@@ -52,8 +49,7 @@ export default function GptConfigPage() {
   }, [pushToast]);
 
   const updateField = (field) => (e) => {
-    const value =
-      field === "temperature" ? parseFloat(e.target.value) || 0 : e.target.value;
+    const value = field === "temperature" ? parseFloat(e.target.value) || 0 : e.target.value;
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -126,12 +122,7 @@ export default function GptConfigPage() {
           >
             {testing ? "Testing..." : "Test GPT"}
           </button>
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <button className="btn btn-primary" type="button" onClick={handleSave} disabled={saving}>
             {saving ? "Saving..." : "Save"}
           </button>
         </div>
@@ -169,11 +160,7 @@ export default function GptConfigPage() {
                   onClick={() => setShowApiKey((v) => !v)}
                   title={showApiKey ? "Hide API key" : "Show API key"}
                 >
-                  <i
-                    className={
-                      showApiKey ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"
-                    }
-                  />
+                  <i className={showApiKey ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} />
                 </button>
               </div>
 
@@ -181,15 +168,10 @@ export default function GptConfigPage() {
                 <>
                   <span className={styles.hint}>
                     Bạn có thể tạo OpenAI API key tại{" "}
-                    <a
-                      href="https://platform.openai.com/api-keys"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">
                       trang API keys của OpenAI
                     </a>
-                    . Sao chép secret key dạng <code>sk-...</code> rồi dán vào ô
-                    này.
+                    . Sao chép secret key dạng <code>sk-...</code> rồi dán vào ô này.
                   </span>
                   <span className={styles.hint}>
                     Để trống nếu bạn không muốn thay đổi API key hiện tại.
@@ -251,14 +233,13 @@ export default function GptConfigPage() {
 
               {showSystemHelp && (
                 <span className={styles.hint}>
-                  Đây là “vai trò cố định” (system prompt) cho GPT. Ví dụ, trong
-                  hàm sinh câu trả lời từ FAQ, nó sẽ thay cho đoạn:{" "}
+                  Đây là “vai trò cố định” (system prompt) cho GPT. Ví dụ, trong hàm sinh câu trả
+                  lời từ FAQ, nó sẽ thay cho đoạn:{" "}
                   <code>
-                    "Bạn là nhân viên chăm sóc khách hàng. Hãy trả lời trực tiếp
-                    cho khách bằng tiếng Việt, lịch sự, ngắn gọn..."
+                    "Bạn là nhân viên chăm sóc khách hàng. Hãy trả lời trực tiếp cho khách bằng
+                    tiếng Việt, lịch sự, ngắn gọn..."
                   </code>
-                  . Các request AI trong hệ thống có thể dùng nội dung này làm
-                  lời dặn chung.
+                  . Các request AI trong hệ thống có thể dùng nội dung này làm lời dặn chung.
                 </span>
               )}
 
@@ -272,8 +253,6 @@ export default function GptConfigPage() {
             </div>
           </div>
         </div>
-
-        
       </div>
     </PageLayout>
   );

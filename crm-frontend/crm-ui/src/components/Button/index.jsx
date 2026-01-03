@@ -4,11 +4,7 @@ const cx = classNames.bind(styles);
 
 export default function Button({ children, loading, disabled, className, ...rest }) {
   return (
-    <button
-      className={cx("btn", className, { loading })}
-      disabled={disabled || loading}
-      {...rest}
-    >
+    <button className={cx("btn", className, { loading })} disabled={disabled || loading} {...rest}>
       {loading ? "…" : children}
     </button>
   );

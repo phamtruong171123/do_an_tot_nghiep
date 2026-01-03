@@ -4,21 +4,9 @@ import styles from "./CustomerDetailPage.module.scss";
 
 const cx = classNames.bind(styles);
 
-const SEGMENT_OPTIONS = [
-  "POTENTIAL",
-  "NEW",
-  "ACTIVE",
-  "VIP",
-  "DROPPED",
-  "SPAM",
-];
+const SEGMENT_OPTIONS = ["POTENTIAL", "NEW", "ACTIVE", "VIP", "DROPPED", "SPAM"];
 
-export default function CustomerSummaryPanel({
-  segment,
-  note,
-  onChangeSegment,
-  onChangeNote,
-}) {
+export default function CustomerSummaryPanel({ segment, note, onChangeSegment, onChangeNote }) {
   const [internalSegment, setInternalSegment] = React.useState(segment);
   const [internalNote, setInternalNote] = React.useState(note);
 

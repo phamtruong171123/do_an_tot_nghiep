@@ -3,19 +3,25 @@ import { apiGet, apiPost, apiPatch } from "../../lib/apiClient";
 // Map dữ liệu 
 export function normalizeTicketSummary(raw) {
   const customerName = raw.customer?.name || "";
+  const customerId = raw.customer?.id || null;
+  const assigneeId =
+    raw.assigneeId ?? (raw.assignee?.id ?? null);
+
   const assigneeName =
     raw.assignee?.name || raw.assignee?.username || "";
   const notesCount= typeof raw.notesCount === "number" ? raw.notesCount : 0;
-   const customerSegment = raw.customer?.segment || "POTENTIAL";
+
+   const customerSegment = raw.customer?.customerSegment || "POTENTIAL";
   return {
     id: raw.id,
     code: raw.code,
     subject: raw.subject,
     customerName,
+    customerId,
     customerSegment,
     dueAt: raw.dueAt || null,
     isOverdue: !!raw.isOverdue,
-    assigneeId: raw.assigneeId ?? null,
+    assigneeId,
     assigneeName,
     status: raw.status,
     priority: raw.priority,
@@ -58,8 +64,11 @@ export async function createTicketFromForm(form) {
     description: null,
     priority: form.priority || "NORMAL",
     conversationId: null,
-    customerId: null,
-    assigneeId: null, 
+    customerId:
+          form.customerId != null
+            ? Number(form.customerId)
+            : null,
+    assigneeId: form.assigneeId ?? null,
   };
 
   const res = await apiPost("/api/tickets", payload);
@@ -80,9 +89,11 @@ export async function updateTicketFromForm(id, form) {
   if (form.priority !== undefined) {
     payload.priority = form.priority;
   }
+  if (form.customerId !== undefined) {
+    payload.customerId =
+      form.customerId != null ? Number(form.customerId) : null;
+  }
 
-  // hiện tại form có dueAt, assigneeName, customerName là mock → chưa map lên BE
-  // Sau này nếu có chọn assignee/customer thật thì bổ sung assigneeId, customerId vào đây.
 
   if(form.assigneeId !== undefined){
     payload.assigneeId = form.assigneeId;

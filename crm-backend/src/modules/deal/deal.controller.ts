@@ -2,10 +2,8 @@ import { Request, Response } from "express";
 import * as dealService from "./deal.service";
 import { JwtUser } from "../../middleware/auth";
 
-
-
 export async function getDeals(req: Request, res: Response) {
-  const { customerId, page, pageSize, search, sortBy, sortOrder, stage,view } = req.query;
+  const { customerId, page, pageSize, search, sortBy, sortOrder, stage, view } = req.query;
   const user = (req as any).user as JwtUser;
 
   const data = await dealService.listDeals({
@@ -26,7 +24,6 @@ export async function getDeals(req: Request, res: Response) {
   res.json(data);
 }
 
-
 export async function getDealById(req: Request, res: Response) {
   const { id } = req.params;
   const user = (req as any).user as JwtUser;
@@ -39,20 +36,29 @@ export async function getDealById(req: Request, res: Response) {
 export async function postDeal(req: Request, res: Response) {
   const user = (req as any).user as JwtUser;
 
-  const { customerId, title, description, quantity, unitPrice,paidAmount, costNote, appointmentAt } = req.body;
+  const {
+    customerId,
+    title,
+    description,
+    quantity,
+    unitPrice,
+    paidAmount,
+    costNote,
+    appointmentAt,
+  } = req.body;
 
   if (!customerId || !title) {
     return res.status(400).json({ message: "customerId và title là bắt buộc" });
   }
 
-  const deal:any = await dealService.createDeal({
+  const deal: any = await dealService.createDeal({
     customerId: Number(customerId),
     title,
     description,
     quantity: quantity != null ? Number(quantity) : undefined,
-    unitPrice: unitPrice !=null? Number(unitPrice): undefined,
-    paidAmount: paidAmount !=null? Number(paidAmount): undefined,
-    costNote:costNote ?? "",
+    unitPrice: unitPrice != null ? Number(unitPrice) : undefined,
+    paidAmount: paidAmount != null ? Number(paidAmount) : undefined,
+    costNote: costNote ?? "",
     appointmentAt: appointmentAt ? new Date(appointmentAt) : undefined,
     ownerId: user.id,
   });
@@ -103,15 +109,17 @@ export async function getRecentDealsOfCustomer(req: Request, res: Response) {
   );
 
   res.json(items);
-};
-
+}
 
 export async function patchDeal(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
     const user = (req as any).user as { id: number; role: "ADMIN" | "AGENT" };
-  const updated = await dealService.updateDealWithActivity(id, req.body, { id: user.id, role: user.role });
+    const updated = await dealService.updateDealWithActivity(id, req.body, {
+      id: user.id,
+      role: user.role,
+    });
 
     return res.json(updated);
   } catch (e: any) {
@@ -156,4 +164,3 @@ export async function rejectContract(req: Request, res: Response) {
     return res.status(e.statusCode || 400).json({ error: e.message || "Reject failed" });
   }
 }
-

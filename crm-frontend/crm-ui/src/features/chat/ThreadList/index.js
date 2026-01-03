@@ -2,10 +2,10 @@ import React from "react";
 import styles from "./ThreadList.module.scss";
 import ThreadListItem from "./ThreadListItem";
 
-export default function ThreadList({ items=[], activeId, onSelect ,metaById={}}) {
+export default function ThreadList({ items = [], activeId, onSelect, metaById = {} }) {
   return (
     <div className={styles.list}>
-      {items.map(t => (
+      {items.map((t) => (
         <ThreadListItem
           key={t.id}
           item={t}

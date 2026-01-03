@@ -210,6 +210,6 @@ export async function autoReplyByFaqIfMatch(ctx: AutoReplyContext) {
     });
   } catch (err) {
     console.error("[autoReplyByFaqIfMatch] error:", err);
-    // không throw để tránh làm fail webhook
+
   }
 }

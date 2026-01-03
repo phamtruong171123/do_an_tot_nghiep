@@ -13,6 +13,8 @@ export default function TicketList({ items , onEdit}) {
     return <div className={cx("empty")}>No Tickets found!</div>;
   }
 
+  //console.log(items);
+
   return (
     <div className={cx("tableWrap")}>
       <table className={cx("table")}>

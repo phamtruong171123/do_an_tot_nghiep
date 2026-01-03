@@ -120,7 +120,7 @@ export async function listTickets(params: {
       take: limit,
       include: {
         assignee: { select: { id: true, username: true } },
-        customer: { select: { id: true, name: true } },
+        customer: { select: { id: true, name: true,segment:true } },
         _count: {
           select: { notes: true },
         },
@@ -151,6 +151,7 @@ export type UpdateTicketInput = {
   status?: TicketStatus;
   priority?: TicketPriority;
   assigneeId?: number | null;
+  customerId?: number | null;
 };
 
 export async function getTicketByUser(userId: number) {

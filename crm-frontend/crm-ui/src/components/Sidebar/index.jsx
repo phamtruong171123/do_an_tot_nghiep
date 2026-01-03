@@ -1,7 +1,7 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
 import classNames from "classnames/bind";
-import { ChatUnreadContext } from "../../contexts/ChatUnReadContext"; 
+import { ChatUnreadContext } from "../../contexts/ChatUnReadContext";
 import styles from "./Sidebar.module.scss";
 
 const cx = classNames.bind(styles);
@@ -27,29 +27,21 @@ export default function Sidebar({ brand = "SaaS Kit", items = [] }) {
               className={({ isActive }) => cx("navItem", { active: isActive })}
             >
               {it.iconClass ? (
-                <i
-                  className={`${cx("icon")} ${it.iconClass}`}
-                  aria-hidden="true"
-                />
+                <i className={`${cx("icon")} ${it.iconClass}`} aria-hidden="true" />
               ) : (
                 <span className={cx("icon")}>{it.icon || "•"}</span>
               )}
 
               <span className={cx("label")}>{it.label}</span>
 
-              {isChat && total > 0 && (
-                <span className={cx("badge")}>{total}</span>
-              )}
+              {isChat && total > 0 && <span className={cx("badge")}>{total}</span>}
             </NavLink>
           );
         })}
       </nav>
 
       <div className={cx("bottom")}>
-        <NavLink
-          to="settings"
-          className={({ isActive }) => cx("navItem", { active: isActive })}
-        >
+        <NavLink to="settings" className={({ isActive }) => cx("navItem", { active: isActive })}>
           <i className={`${cx("icon")} fa-solid fa-gear`} aria-hidden="true" />
           <span className={cx("label")}>Settings</span>
         </NavLink>

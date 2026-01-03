@@ -300,7 +300,7 @@ export async function updateDealWithActivity(id: string, payload: any, user: Use
       amount: payload.amount,
       currency: payload.currency,
       stage: payload.stage as DealStage,
-
+      appointmentAt:payload.appointmentAt,
       unitPrice: payload.unitPrice !== undefined ? toDecimal(payload.unitPrice) : undefined,
       quantity: payload.quantity !== undefined ? toDecimal(payload.quantity) : undefined,
       paidAmount: payload.paidAmount !== undefined ? toDecimal(payload.paidAmount) : undefined,
@@ -381,6 +381,7 @@ export async function approveContract(dealId: string, adminId: number) {
       stage: "CONTRACT",
       approvalReviewedAt: new Date(),
       approvalReviewedById: adminId,
+      closedAt: new Date(),
     },
   });
   await prisma.dealActivity.create({

@@ -26,12 +26,12 @@ export default function CustomerTicketsPanel({ tickets, onClickTicket }) {
               <div className={cx("ticketCode")}>{t.code}</div>
               <div className={cx("ticketSubject")}>{t.subject}</div>
               <div className={cx("ticketMeta")}>
-                <span className={cx("ticketStatus", t.status.toLowerCase())}>
-                  {t.status}
-                </span>
-                {t.status !=="CLOSED" && <span className={cx("ticketPriority", t.priority.toLowerCase())}>
-                  {t.priority}
-                </span>}
+                <span className={cx("ticketStatus", t.status.toLowerCase())}>{t.status}</span>
+                {t.status !== "CLOSED" && (
+                  <span className={cx("ticketPriority", t.priority.toLowerCase())}>
+                    {t.priority}
+                  </span>
+                )}
               </div>
             </button>
           ))}

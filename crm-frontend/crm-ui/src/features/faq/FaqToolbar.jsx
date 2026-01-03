@@ -1,7 +1,7 @@
 // src/features/faq/FaqToolbar.jsx
 import React from "react";
 import classNames from "classnames/bind";
-import styles from "./Faq.module.scss"; 
+import styles from "./Faq.module.scss";
 
 const cx = classNames.bind(styles);
 

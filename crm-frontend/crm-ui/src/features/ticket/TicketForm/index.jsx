@@ -1,11 +1,12 @@
 import React from "react";
 import classNames from "classnames/bind";
 import styles from "./TicketForm.module.scss";
-
+import CustomerSearchSelect from "../../../components/CustomerSearchSelect";
 const cx = classNames.bind(styles);
 
 const DEFAULT_VALUES = {
   subject: "",
+  customerId: null,
   customerName: "",
   dueAt: "",
   status: "OPEN",
@@ -108,17 +109,27 @@ export default function TicketForm({
             />
           </div>
 
-          
+
           <div className={cx("row")}>
             <label className={cx("label")}>Customer</label>
-            <input
-              type="text"
-              className={cx("input")}
-              value={values.customerName}
-              onChange={handleChange("customerName")}
-              placeholder="Customer name (optional)"
+            <CustomerSearchSelect
+              value={values.customerId}
+              onChange={(id, customer) => {
+                setValues((prev) => ({
+                  ...prev,
+                  customerId: id,
+                  customerName: customer?.name || "",
+                }));
+              }}
+              placeholder="Search by name or phone number"
+              selectedCustomer={
+                     initialValues?.customerId
+                       ? { id: initialValues.customerId, name: initialValues.customerName }
+                        : null
+                     }
             />
           </div>
+
 
           {/* Status + Priority + Due date (3 cột) */}
           <div className={cx("rowGrid")}>
@@ -173,7 +184,7 @@ export default function TicketForm({
                 }
                 onChange={handleChange("assigneeId")}
               >
-                <option value="">(Unassigned)</option>
+                <option value="">{ initialValues?.assigneeId?  initialValues?.assigneeName : "Unassigned"}</option>
                 {assigneeOptions.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.name}{" "}
@@ -186,10 +197,7 @@ export default function TicketForm({
                 type="text"
                 className={cx("input")}
                 value={
-                  values.assigneeName ||
-                  currentUser?.fullName ||
-                  currentUser?.username ||
-                  ""
+                  values.assigneeName || ""
                 }
                 readOnly
               />

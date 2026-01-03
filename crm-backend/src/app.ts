@@ -14,7 +14,7 @@ import dealRoutes from "./modules/deal/deal.routes";
 import gptConfigRoutes from "./modules/gptConfig/gptConfig.routes";
 import { getRecentDealsOfCustomer } from "./modules/deal/deal.controller";
 import { authRequired } from "./middleware/auth";
-
+import dashboardRoutes from "./modules/dashboard/dashboard.routes";
 const ALLOWED_ORIGINS = ["http://localhost:3000"];
 
 export const app = express();
@@ -47,5 +47,6 @@ app.use("/api/faq", faqRoutes);
 app.use("/api/ai", aiSuggestionRoutes);
 app.use("/api/deals", dealRoutes);
 app.use("/api/gpt-config", gptConfigRoutes);
+app.use("/api/",dashboardRoutes);
 
 const PORT = Number(process.env.PORT ?? 4000);

@@ -5,7 +5,7 @@ import ChatMoreActions from "../ChatMoreAction";
 import { formatLastActive } from "../../../core/helper/formatLastActive";
 import { fetchConversationCustomer } from "../api";
 
-export default function ChatHeader({ thread,injectedLastActivityAt  }) {
+export default function ChatHeader({ thread, injectedLastActivityAt }) {
   const p = thread.participants && thread.participants[0];
   const avatar = p?.avatarUrl || thread.iconUrl || defaultAvatar;
   const [customer, setCustomer] = React.useState(null);
@@ -13,10 +13,9 @@ export default function ChatHeader({ thread,injectedLastActivityAt  }) {
   const last = formatLastActive(effectiveLastActivityAt);
 
   const isOnline = effectiveLastActivityAt
-  ? Date.now() - new Date(effectiveLastActivityAt).getTime() < 2 * 60 * 1000
-  : false;
+    ? Date.now() - new Date(effectiveLastActivityAt).getTime() < 2 * 60 * 1000
+    : false;
 
-  
   console.log("Customer in ChatHeader:", customer);
 
   React.useEffect(() => {
@@ -40,8 +39,6 @@ export default function ChatHeader({ thread,injectedLastActivityAt  }) {
     };
   }, [thread?.id]);
 
-
-
   return (
     <header className={styles.header}>
       <div className={styles.left}>
@@ -49,7 +46,9 @@ export default function ChatHeader({ thread,injectedLastActivityAt  }) {
         <div>
           <div className={styles.title}>{thread.title}</div>
 
-          <div className={`${styles.status} ${isOnline ? styles.statusOnline : styles.statusOffline}`}>
+          <div
+            className={`${styles.status} ${isOnline ? styles.statusOnline : styles.statusOffline}`}
+          >
             <span className={`${styles.dot} ${isOnline ? styles.dotOnline : styles.dotOffline}`} />
             {isOnline ? "Online" : last ? `Active ${last}` : "Offline"}
           </div>

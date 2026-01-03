@@ -2,7 +2,6 @@ import { CustomerSegment, DealStage, PrismaClient } from "@prisma/client";
 
 type RankableSegment = Exclude<CustomerSegment, "SPAM">;
 
-
 const SEGMENT_RANK: Record<RankableSegment, number> = {
   DROPPED: 0,
   POTENTIAL: 1,
@@ -15,7 +14,6 @@ function parseIntSafe(v: any, fallback: number) {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
-
 
 const DROPPED_AFTER_DAYS = parseIntSafe(process.env.SEGMENT_DROPPED_AFTER_DAYS, 60);
 
@@ -64,7 +62,6 @@ export async function promoteSegmentFromDeals(prisma: PrismaClient, customerId: 
 
   if (customer.segment === CustomerSegment.SPAM) return;
 
-
   const wonCount = await prisma.deal.count({
     where: { customerId, stage: DealStage.CONTRACT },
   });
@@ -105,10 +102,7 @@ export async function dropInactiveCustomers(prisma: PrismaClient) {
   await prisma.customer.updateMany({
     where: {
       segment: { notIn: [CustomerSegment.SPAM, CustomerSegment.DROPPED] },
-      OR: [
-        { lastActivityAt: { lt: cutoff } },
-        { lastActivityAt: null, createdAt: { lt: cutoff } },
-      ],
+      OR: [{ lastActivityAt: { lt: cutoff } }, { lastActivityAt: null, createdAt: { lt: cutoff } }],
     },
     data: { segment: CustomerSegment.DROPPED },
   });

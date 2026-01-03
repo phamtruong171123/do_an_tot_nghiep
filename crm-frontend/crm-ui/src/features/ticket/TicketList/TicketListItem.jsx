@@ -36,8 +36,8 @@ export default function TicketListItem({ item, onEdit }) {
   const [adding, setAdding] = React.useState(false);
 
 
-
   const handleEdit = () => {
+
     onEdit && onEdit(item);
   };
 
@@ -109,20 +109,23 @@ export default function TicketListItem({ item, onEdit }) {
           {priority}
         </span>
       </td>
-            {/* Actions (Edit + Notes) */}
+            {/* Actions  */}
       <td className={cx("colActions")} onClick={(e) => e.stopPropagation()}>
         <div className={cx("actionsWrap")}>
-          <button
-            type="button"
-            className={cx("actionBtn")}
-            title="Sửa ticket"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEdit();
-            }}
-          >
-            <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
-          </button>
+          {!(status==="CLOSED") &&(
+            <button
+              type="button"
+              className={cx("actionBtn")}
+              title="Sửa ticket"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit();
+              }}
+            >
+              <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
+            </button>
+          )}
+
 
           <Tippy
             visible={notesOpen}
@@ -205,10 +208,6 @@ export default function TicketListItem({ item, onEdit }) {
               }}
             >
               <i className="fa-regular fa-note-sticky" aria-hidden="true" />
-              {/* Nếu muốn hiện badge thì bật lại */}
-              {/* {notesCount > 0 && (
-                <span className={cx("notesBadge")}>{notesCount}</span>
-              )} */}
             </button>
           </Tippy>
         </div>

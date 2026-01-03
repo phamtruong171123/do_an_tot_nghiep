@@ -23,25 +23,11 @@ export function normalizeDealSummary(raw) {
 
 // GET /api/deals?customerId=&page=&pageSize=&search=&sortBy=&sortOrder=&stage=
 export async function fetchDeals(opts = {}) {
-  const {
-    page,
-    pageSize,
-    limit,
-    offset,
-    search,
-    sortBy,
-    sortOrder,
-    customerId,
-    stage,
-    view
-  } = opts;
+  const { page, pageSize, limit, offset, search, sortBy, sortOrder, customerId, stage, view } =
+    opts;
 
   const effectivePageSize =
-    typeof pageSize === "number"
-      ? pageSize
-      : typeof limit === "number"
-        ? limit
-        : 20;
+    typeof pageSize === "number" ? pageSize : typeof limit === "number" ? limit : 20;
 
   let effectivePage = typeof page === "number" ? page : 1;
 
@@ -63,7 +49,7 @@ export async function fetchDeals(opts = {}) {
   if (search) params.set("search", search);
   if (sortBy) params.set("sortBy", sortBy);
   if (sortOrder) params.set("sortOrder", sortOrder);
-  if(view) params.set("view", view);
+  if (view) params.set("view", view);
 
   const url = `/api/deals?${params.toString()}`;
   const res = await apiGet(url);
@@ -85,9 +71,6 @@ export async function fetchDeals(opts = {}) {
   };
 }
 
-
-
-
 // POST /api/deals
 export async function createDeal(form) {
   const payload = {
@@ -95,14 +78,12 @@ export async function createDeal(form) {
     title: form.title?.trim() || "",
   };
 
-  
   if (form.amount !== "" && form.amount !== undefined && form.amount !== null) {
     payload.amount = Number(form.amount);
   }
 
- 
   if (form.quantity !== "" && form.quantity !== undefined && form.quantity !== null) {
-    payload.quantity = form.quantity; 
+    payload.quantity = form.quantity;
   }
   if (form.unitPrice !== "" && form.unitPrice !== undefined && form.unitPrice !== null) {
     payload.unitPrice = form.unitPrice;
@@ -117,8 +98,7 @@ export async function createDeal(form) {
   return normalizeDealSummary(res);
 }
 
-
-// PATCH /api/deals/:id  (nếu sau này cần chỉnh stage, amount,...)
+// PATCH /api/deals/:id
 export async function updateDeal(id, patch) {
   const payload = { ...patch };
   if (payload.amount != null) payload.amount = Number(payload.amount);
@@ -151,7 +131,6 @@ export async function fetchRecentDealsForCustomer(customerId, limit = 5) {
   });
   return items;
 }
-
 
 //approve/reject contract
 export async function requestContractApproval(id) {

@@ -20,5 +20,4 @@ function Footer({ children }) {
 
 TicketLayout.Footer = Footer;
 
-
 export default TicketLayout;

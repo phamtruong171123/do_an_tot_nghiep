@@ -7,14 +7,7 @@ export const SEGMENT_LABEL = {
   SPAM: "Spam",
 };
 
-export const SEGMENTS_BY_PRIORITY = [
-  "VIP",
-  "ACTIVE",
-  "NEW",
-  "POTENTIAL",
-  "DROPPED",
-  "SPAM",
-];
+export const SEGMENTS_BY_PRIORITY = ["VIP", "ACTIVE", "NEW", "POTENTIAL", "DROPPED", "SPAM"];
 
 export function normalizeSegment(value) {
   if (!value) return "POTENTIAL";

@@ -30,7 +30,7 @@ export default function DealPage() {
   const debouncedSearch = useDebouncedValue(search, 400);
   const { pushToast } = useToast?.() || { pushToast: () => {} };
 
-  const navigate=useNavigate();
+  const navigate = useNavigate();
 
   function getMe() {
     try {
@@ -42,10 +42,9 @@ export default function DealPage() {
 
   const me = React.useMemo(() => getMe(), []);
   const isAdmin = me?.role === "ADMIN";
-  const role=(me?.role).toLowerCase();
+  const role = (me?.role).toLowerCase();
 
   const [tab, setTab] = React.useState("mine");
-
 
   React.useEffect(() => {
     loadData();
@@ -55,11 +54,7 @@ export default function DealPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const view = isAdmin
-        ? tab === "approval"
-          ? "pendingApproval"
-          : "mine"
-        : undefined;
+      const view = isAdmin ? (tab === "approval" ? "pendingApproval" : "mine") : undefined;
 
       const { items, total } = await fetchDeals({
         page,
@@ -85,7 +80,6 @@ export default function DealPage() {
     setPage(1);
     setSearch(e.target.value);
   };
-
 
   const handleStageChange = (e) => {
     setStageFilter(e.target.value);
@@ -118,26 +112,26 @@ export default function DealPage() {
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <h1 className={styles.title}>Deals</h1>
-            <div className={styles.subtitle}>Total: <strong>{total}</strong> deals</div>
+            <div className={styles.subtitle}>
+              Total: <strong>{total}</strong> deals
+            </div>
           </div>
 
           <div className={styles.headerMiddle}>
             <div className={styles.toolbar}>
-            <div className={styles.searchBox}>
-              <i
-                className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`}
-                aria-hidden="true"
-              />
+              <div className={styles.searchBox}>
+                <i
+                  className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`}
+                  aria-hidden="true"
+                />
 
-              <input
-                className={styles.searchInput}
-                placeholder="Search by code, title or customer"
-                value={search}
-                onChange={handleSearchChange}
-              />
-            </div>
-
-
+                <input
+                  className={styles.searchInput}
+                  placeholder="Search by code, title or customer"
+                  value={search}
+                  onChange={handleSearchChange}
+                />
+              </div>
 
               <div className={styles.sortGroup}>
                 <span className={styles.sortLabel}>Stage:</span>
@@ -175,10 +169,7 @@ export default function DealPage() {
           )}
 
           <div className={styles.headerRight}>
-            <button
-              className={styles.primaryBtn}
-              onClick={() => setShowCreate(true)}
-            >
+            <button className={styles.primaryBtn} onClick={() => setShowCreate(true)}>
               <span style={{ marginRight: "9px" }}>Add New</span>
               <i className="fa-solid fa-plus" aria-hidden="true" />
             </button>
@@ -193,54 +184,46 @@ export default function DealPage() {
           ) : (
             <table className={styles.table}>
               <thead>
-              <tr>
-                <th>Code</th>
-                <th>Title</th>
-                <th>Customer</th>
-                <th>Stage</th>
-                <th>Appointment</th>
-                <th className={styles.amountCol}>Paid Amount</th>
-              </tr>
+                <tr>
+                  <th>Code</th>
+                  <th>Title</th>
+                  <th>Customer</th>
+                  <th>Stage</th>
+                  <th>Appointment</th>
+                  <th className={styles.amountCol}>Paid Amount</th>
+                </tr>
               </thead>
               <tbody>
-              {items.map((d) => (
-                <tr
-                  key={d.id}
-                  className={styles.row}
-                  onClick={() =>
-                    navigate(`/app/${role}/deals/${d.id}`)
-                  }
-                >
-                  <td>{d.code}</td>
-                  <td className={styles.cellTitle}>{d.title}</td>
-                  <td>{d.customerName || "-"}</td>
-                  <td>
-                    {(() => {
-                      const stageKey = normalizeStatusKey(d.stage);
-                      const stageLabel = normalizeStatusLabel(d.stage);
+                {items.map((d) => (
+                  <tr
+                    key={d.id}
+                    className={styles.row}
+                    onClick={() => navigate(`/app/${role}/deals/${d.id}`)}
+                  >
+                    <td>{d.code}</td>
+                    <td className={styles.cellTitle}>{d.title}</td>
+                    <td>{d.customerName || "-"}</td>
+                    <td>
+                      {(() => {
+                        const stageKey = normalizeStatusKey(d.stage);
+                        const stageLabel = normalizeStatusLabel(d.stage);
 
-                      return (
-                        <span
-                          className={`${styles.pill} ${
-                            styles["pill_" + stageKey] || ""
-                          }`}
-                        >
+                        return (
+                          <span className={`${styles.pill} ${styles["pill_" + stageKey] || ""}`}>
                             {stageLabel}
                           </span>
-                      );
-                    })()}
-                  </td>
+                        );
+                      })()}
+                    </td>
 
-                  <td>{formatDate(d.appointmentAt)}</td>
-                  <td className={styles.cellAmount}>
-                    {d.paidAmount != null
-                      ? `${formatNumber(
-                        d.paidAmount.toLocaleString("en-US")
-                      )} VND`
-                      : "-"}
-                  </td>
-                </tr>
-              ))}
+                    <td>{formatDate(d.appointmentAt)}</td>
+                    <td className={styles.cellAmount}>
+                      {d.paidAmount != null
+                        ? `${formatNumber(d.paidAmount.toLocaleString("en-US"))} VND`
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}

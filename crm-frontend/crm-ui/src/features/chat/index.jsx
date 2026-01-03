@@ -8,16 +8,19 @@ import Composer from "./Composer";
 import EmptyState from "./EmptyState";
 
 import { ChatUnreadContext } from "../../contexts/ChatUnReadContext";
-import  {HeaderSearchContext}  from "../../contexts/HeaderSearchContext";
-import { fetchThreads, fetchMessages, sendMessage, markConversationRead ,normalizeMessage} from "./api";
+import { HeaderSearchContext } from "../../contexts/HeaderSearchContext";
+import {
+  fetchThreads,
+  fetchMessages,
+  sendMessage,
+  markConversationRead,
+  normalizeMessage,
+} from "./api";
 import { getChatSocket } from "./socket";
 import { fetchConversationCustomer } from "./api";
 
-
-
 export default function Chat() {
-
-  const { text: searchText } = React.useContext(HeaderSearchContext); 
+  const { text: searchText } = React.useContext(HeaderSearchContext);
   const { setTotal } = React.useContext(ChatUnreadContext);
   const [threads, setThreads] = React.useState([]);
   const [activeThreadId, setActiveThreadId] = React.useState(null);
@@ -30,53 +33,51 @@ export default function Chat() {
   const [error, setError] = React.useState(null);
   const [metaByThreadId, setMetaByThreadId] = React.useState({});
 
-React.useEffect(() => {
-  setHeaderLastActivityAt(null);
-}, [activeThreadId]);
+  React.useEffect(() => {
+    setHeaderLastActivityAt(null);
+  }, [activeThreadId]);
 
-  
   const upsertMeta = React.useCallback((conversationId, customer) => {
-  if (!conversationId || !customer) return;
-  setMetaByThreadId((prev) => ({
-    ...prev,
-    [conversationId]: {
-      ...(prev[conversationId] || {}),
-      customerId: customer.id,
-      segment: customer.segment,
-      customerName: customer.name,
-    },
-  }));
-}, []);
+    if (!conversationId || !customer) return;
+    setMetaByThreadId((prev) => ({
+      ...prev,
+      [conversationId]: {
+        ...(prev[conversationId] || {}),
+        customerId: customer.id,
+        segment: customer.segment,
+        customerName: customer.name,
+      },
+    }));
+  }, []);
 
-async function prefetchMeta(threads) {
-  
-  const ids = threads.map((t) => t.id);
-  for (let i = 0; i < ids.length; i += 5) {
-    const chunk = ids.slice(i, i + 5);
-    const results = await Promise.all(
-      chunk.map(async (id) => {
-        try {
-          const { customer } = await fetchConversationCustomer(id);
-          return { id, customer };
-        } catch {
-          return null;
-        }
-      })
-    );
-    results.filter(Boolean).forEach((r) => upsertMeta(r.id, r.customer));
+  async function prefetchMeta(threads) {
+    const ids = threads.map((t) => t.id);
+    for (let i = 0; i < ids.length; i += 5) {
+      const chunk = ids.slice(i, i + 5);
+      const results = await Promise.all(
+        chunk.map(async (id) => {
+          try {
+            const { customer } = await fetchConversationCustomer(id);
+            return { id, customer };
+          } catch {
+            return null;
+          }
+        })
+      );
+      results.filter(Boolean).forEach((r) => upsertMeta(r.id, r.customer));
+    }
   }
-}
 
   React.useEffect(() => {
     let cancelled = false;
     async function loadThreads() {
       setLoadingThreads(true);
-      
+
       try {
         const data = await fetchThreads();
         if (cancelled) return;
         setThreads(data);
-        prefetchMeta(data); 
+        prefetchMeta(data);
         if (!activeThreadId && data.length > 0) {
           setActiveThreadId(data[0].id);
         }
@@ -117,9 +118,7 @@ async function prefetchMeta(threads) {
     };
   }, [activeThreadId]);
 
-  const activeThread =
-    threads.find((t) => t.id === activeThreadId) || null;
-
+  const activeThread = threads.find((t) => t.id === activeThreadId) || null;
 
   // mỗi lần threads thay đổi thì cập nhật tổng unread
   React.useEffect(() => {
@@ -131,17 +130,10 @@ async function prefetchMeta(threads) {
   // ====== chọn thread: đồng thời reset unread ======
   const handleSelectThread = async (id) => {
     setActiveThreadId(id);
-    setThreads((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, unread: 0 } : t
-
-      )
-    );
+    setThreads((prev) => prev.map((t) => (t.id === id ? { ...t, unread: 0 } : t)));
     try {
       await markConversationRead(id);
-    } catch (error) {
-      
-    }
+    } catch (error) {}
   };
 
   // ====== SOCKET: join/leave phòng theo conversation ======
@@ -156,68 +148,63 @@ async function prefetchMeta(threads) {
     };
   }, [activeThreadId]);
 
-  
   // ====== SOCKET: lắng message:new và cập nhật UI ======
-React.useEffect(() => {
-  const socket = getChatSocket();
+  React.useEffect(() => {
+    const socket = getChatSocket();
 
-  const handleNewMessage = ({ conversationId, message, customerLastActivityAt }) => {
-    if (conversationId === activeThreadId && customerLastActivityAt) {
-    setHeaderLastActivityAt(customerLastActivityAt);
-  }
-    const m = normalizeMessage(message); 
-    
-    // 1) Cập nhật ThreadList
-    setThreads((prev) => {
-      let list = [...prev];
-      const idx = list.findIndex((t) => t.id === conversationId);
-
-      if (idx >= 0) {
-        const old = list[idx];
-        const updated = {
-          ...old,
-          lastMessageSnippet: m.text || old.lastMessageSnippet,
-          updatedAt: m.sentAt || old.updatedAt,
-          lastMessageSentBy: m.sentBy || old.lastMessageSentBy,   
-          unread:
-            conversationId === activeThreadId
-              ? old.unread || 0
-              : (old.unread || 0) + 1,
-        };
-
-        list.splice(idx, 1);
-        list.unshift(updated);
-      } else {
-        // conversation mới
-        const newThread = {
-          id: conversationId,
-          title: "Khách hàng Facebook",
-          iconUrl: null,
-          participants: [],
-          lastMessageSnippet: m.text,
-          updatedAt: m.sentAt,
-          lastMessageSentBy: m.sentBy,
-          unread: conversationId === activeThreadId ? 0 : 1,
-        };
-        list = [newThread, ...list];
+    const handleNewMessage = ({ conversationId, message, customerLastActivityAt }) => {
+      if (conversationId === activeThreadId && customerLastActivityAt) {
+        setHeaderLastActivityAt(customerLastActivityAt);
       }
+      const m = normalizeMessage(message);
 
-      return list;
-    });
+      // 1) Cập nhật ThreadList
+      setThreads((prev) => {
+        let list = [...prev];
+        const idx = list.findIndex((t) => t.id === conversationId);
 
-    // 2) Nếu đang mở → append message vào MessageList
-    if (conversationId !== activeThreadId) return;
+        if (idx >= 0) {
+          const old = list[idx];
+          const updated = {
+            ...old,
+            lastMessageSnippet: m.text || old.lastMessageSnippet,
+            updatedAt: m.sentAt || old.updatedAt,
+            lastMessageSentBy: m.sentBy || old.lastMessageSentBy,
+            unread: conversationId === activeThreadId ? old.unread || 0 : (old.unread || 0) + 1,
+          };
 
-    setMessages((prev) => {
-      if (prev.some((x) => x.id === m.id)) return prev;
-      return [...prev, m];
-    });
-  };
+          list.splice(idx, 1);
+          list.unshift(updated);
+        } else {
+          // conversation mới
+          const newThread = {
+            id: conversationId,
+            title: "Khách hàng Facebook",
+            iconUrl: null,
+            participants: [],
+            lastMessageSnippet: m.text,
+            updatedAt: m.sentAt,
+            lastMessageSentBy: m.sentBy,
+            unread: conversationId === activeThreadId ? 0 : 1,
+          };
+          list = [newThread, ...list];
+        }
 
-  socket.on("message:new", handleNewMessage);
-  return () => socket.off("message:new", handleNewMessage);
-}, [activeThreadId]);
+        return list;
+      });
 
+      // 2) Nếu đang mở → append message vào MessageList
+      if (conversationId !== activeThreadId) return;
+
+      setMessages((prev) => {
+        if (prev.some((x) => x.id === m.id)) return prev;
+        return [...prev, m];
+      });
+    };
+
+    socket.on("message:new", handleNewMessage);
+    return () => socket.off("message:new", handleNewMessage);
+  }, [activeThreadId]);
 
   // ====== Gửi message (HTTP) ======
   const handleSend = async (text) => {
@@ -226,9 +213,7 @@ React.useEffect(() => {
       const msg = await sendMessage(activeThreadId, text);
 
       // append message ngay
-      setMessages((prev) =>
-        prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]
-      );
+      setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
 
       // cập nhật ThreadList (last message + đưa lên đầu, unread = 0 vì mình đang mở)
       setThreads((prev) => {
@@ -254,8 +239,8 @@ React.useEffect(() => {
     }
   };
 
-// ====== Lọc threads theo search text từ Header ======
-// chỉ lọc lại khi threads hoặc searchText thay đổi
+  // ====== Lọc threads theo search text từ Header ======
+  // chỉ lọc lại khi threads hoặc searchText thay đổi
   const filteredThreads = React.useMemo(() => {
     const q = searchText.trim().toLowerCase();
     if (!q) return threads;
@@ -265,7 +250,6 @@ React.useEffect(() => {
       return name.includes(q) || snippet.includes(q);
     });
   }, [threads, searchText]);
-
 
   return (
     <div className={styles.chatPageRoot}>
@@ -294,10 +278,7 @@ React.useEffect(() => {
               <Composer onSend={handleSend} />
             </>
           ) : (
-            <EmptyState
-              title="Select a conversation"
-              subtitle="Choose a chat to start messaging"
-            />
+            <EmptyState title="Select a conversation" subtitle="Choose a chat to start messaging" />
           )
         }
       />
