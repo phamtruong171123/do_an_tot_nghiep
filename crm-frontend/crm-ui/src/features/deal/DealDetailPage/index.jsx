@@ -75,6 +75,10 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
       unitPrice: asInputString(deal?.unitPrice),
       quantity: asInputString(deal?.quantity),
       paidAmount: asInputString(deal?.paidAmount),
+
+      appointmentAt: deal?.appointmentAt
+        ? new Date(deal.appointmentAt).toISOString().slice(0, 16) // "yyyy-MM-ddTHH:mm"
+        : "",
     });
   }, [deal]);
 
@@ -101,6 +105,11 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
     if (locked) return;
 
     try {
+      const appointmentAt =
+        local.appointmentAt && local.appointmentAt !== ""
+          ? new Date(local.appointmentAt).toISOString()
+          : null;
+
       const updated = await updateDeal(deal.id, {
         stage: local.stage,
         description: local.description,
@@ -109,6 +118,7 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
         quantity: convertStringToNumber(local.quantity),
         paidAmount: convertStringToNumber(local.paidAmount),
         costNote: local.costNote,
+        appointmentAt: appointmentAt,
       });
 
       onChange(updated);
@@ -208,25 +218,37 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
     <div className={styles.card}>
       <h2 className={styles.sectionTitle}>Deal Information</h2>
 
-      <div className={styles.formRow}>
-        <label>Stage</label>
-        <select
-          value={local.stage}
-          disabled={locked}
-          onChange={(e) => handleFieldChange("stage", e.target.value)}
-        >
-          {/* Không cho user chọn PENDING/CONTRACT */}
-          {locked && (
-            <option value={local.stage}>{normalizeStageLabel(local.stage)}</option>
-          )}
+      <div className={styles.grid2}>
+        <div className={styles.formRow}>
+          <label>Stage</label>
+          <select
+            value={local.stage}
+            disabled={locked}
+            onChange={(e) => handleFieldChange("stage", e.target.value)}
+          >
+            {/* Không cho user chọn PENDING/CONTRACT */}
+            {locked && (
+              <option value={local.stage}>{normalizeStageLabel(local.stage)}</option>
+            )}
 
-          {!locked &&
-            EDITABLE_STAGES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-        </select>
+            {!locked &&
+              EDITABLE_STAGES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+          </select>
+        </div>
+
+          <div className={styles.formRow}>
+            <label>Appointment time</label>
+            <input
+              type="datetime-local"
+              value={local.appointmentAt || ""}
+              disabled={locked}
+              onChange={(e) => handleFieldChange("appointmentAt", e.target.value)}
+            />
+          </div>
       </div>
 
       <div className={styles.grid4}>
@@ -293,6 +315,8 @@ function DealInfoCard({ deal, onChange, pushToast, reload }) {
           />
         </div>
       </div>
+
+
 
       <div className={styles.formActions}>
         {!locked && (

@@ -94,8 +94,8 @@ model Customer {
   segment CustomerSegment @default(POTENTIAL)
 
   lastActivityAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   // Quan hệ: mỗi customer tối đa 01 conversation
   conversation Conversation?
@@ -232,20 +232,13 @@ model TicketNote {
 model Faq {
   id Int @id @default(autoincrement())
 
-  /// Câu hỏi chuẩn (FAQ Question)
   question String @db.VarChar(1000)
 
-  /// Câu trả lời chuẩn (FAQ Answer)
   answer String @db.Text
+  tags   Json?
 
-  /// Tag chủ đề, ví dụ: ["chinh_sach", "doi_tra"]
-  /// Dùng Json cho linh hoạt
-  tags Json?
-
-  /// Ngôn ngữ, ví dụ: "vi", "en"
   language String @default("vi")
 
-  /// Bật / tắt FAQ (chỉ FAQ active mới dùng cho AI)
   isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -266,20 +259,20 @@ enum DealStage {
 
 model Deal {
   id          String  @id @default(cuid())
-  code        String  @unique // ví dụ: DE-2025-0001
+  code        String  @unique
   title       String
   description String?
 
-  unitPrice   Decimal? @db.Decimal(18,2)
-  quantity    Decimal? @db.Decimal(18,2)
-  paidAmount  Decimal? @db.Decimal(18,2)
-  costNote    String?  @db.VarChar(2000)
+  unitPrice  Decimal? @db.Decimal(18, 2)
+  quantity   Decimal? @db.Decimal(18, 2)
+  paidAmount Decimal? @db.Decimal(18, 2)
+  costNote   String?  @db.VarChar(2000)
 
   approvalRequestedAt   DateTime?
   approvalRequestedById Int?
   approvalReviewedAt    DateTime?
   approvalReviewedById  Int?
-  approvalRejectReason  String?  @db.VarChar(500)
+  approvalRejectReason  String?   @db.VarChar(500)
 
   stage    DealStage @default(POTENTIAL)
   amount   Float?
@@ -326,7 +319,6 @@ model GptConfig {
   baseUrl      String   @default("https://api.openai.com/v1")
   model        String   @default("gpt-4.1-mini")
   temperature  Float    @default(0.3)
-  systemPrompt String?  
+  systemPrompt String?
   updatedAt    DateTime @updatedAt
 }
-

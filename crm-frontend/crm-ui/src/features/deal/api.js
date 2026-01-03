@@ -118,7 +118,7 @@ export async function createDeal(form) {
 }
 
 
-// PATCH /api/deals/:id  (nếu sau này cần chỉnh stage, amount,...)
+// PATCH /api/deals/:id
 export async function updateDeal(id, patch) {
   const payload = { ...patch };
   if (payload.amount != null) payload.amount = Number(payload.amount);

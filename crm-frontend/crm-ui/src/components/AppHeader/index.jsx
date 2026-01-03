@@ -56,9 +56,9 @@ export default function AppHeader({ title = "", user, onChangePassword, onLogout
       </div>
       <div className={cx("center")}>{title}</div>
       <div className={cx("right")}>
-        <button className={cx("iconBtn")} title="Notifications">
-          <i className="fa-solid fa-bell" aria-hidden="true"></i>
-        </button>
+        {/*<button className={cx("iconBtn")} title="Notifications">*/}
+        {/*  <i className="fa-solid fa-bell" aria-hidden="true"></i>*/}
+        {/*</button>*/}
         <div className={cx("user")}>
           <Tippy content={Menu} interactive placement="bottom-end" theme="light">
             <div className={cx("user")} role="button" tabIndex={0}>
