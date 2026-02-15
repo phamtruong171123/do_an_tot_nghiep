@@ -95,6 +95,8 @@ async function findFaqCandidates(text: string, limit = 3) {
 // Sinh câu trả lời từ FAQ bằng OpenAI
 export async function generateSuggestionFromFaq(text: string): Promise<AiSuggestionResult> {
   const gptConfig = await getGptConfig();
+  const apiKey = (gptConfig.apiKey || process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) throw new Error("Missing OpenAI API key (db/env).");
   const trimmed = text?.trim();
   if (!trimmed) {
     return { source: "ai_error", suggestion: null, matchedFaqIds: [] };
@@ -115,8 +117,10 @@ A: ${f.answer}`
 
   try {
     const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY!,
+      apiKey,
+      baseURL: (gptConfig.baseUrl || "https://api.openai.com/v1").trim(),
     });
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [

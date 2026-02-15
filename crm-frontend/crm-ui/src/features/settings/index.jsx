@@ -42,7 +42,7 @@ export default function SettingsPage({ me }) {
           >
             <div className={styles.cardTitle}>GPT Configuration</div>
             <div className={styles.cardDesc}>
-              Configure GPT behavior and templates (coming soon).
+              Configure GPT behavior and templates.
             </div>
           </button>
         )}
