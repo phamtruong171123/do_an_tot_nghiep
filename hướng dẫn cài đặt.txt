@@ -1,0 +1,3 @@
+ở thư mục gốc chạy: npm install
+chạy front-end: cd đến thư mục crm-frontend/crm-ui : chạy npm run start
+chạy backend: cd đến thư mục crm-backend : chạy lệnh npm run dev
